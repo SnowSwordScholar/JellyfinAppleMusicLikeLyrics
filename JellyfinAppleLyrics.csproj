@@ -15,9 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources/web/**/*">
-      <LogicalName>AppleMusic.%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
-    </EmbeddedResource>
+    <EmbeddedResource Include="Resources/web/**" />
   </ItemGroup>
 
 </Project>

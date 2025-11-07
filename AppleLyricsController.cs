@@ -225,7 +225,7 @@ public class AppleLyricsController : ControllerBase
         try
         {
             var assembly = typeof(Plugin).Assembly;
-            var resourcePath = $"JellyfinAppleLyrics.AppleMusic.{fileName}";
+            var resourcePath = $"JellyfinAppleLyrics.Resources.web.{fileName.Replace("/", ".")}";
 
             using var stream = assembly.GetManifestResourceStream(resourcePath);
             if (stream == null)
@@ -252,7 +252,7 @@ public class AppleLyricsController : ControllerBase
         try
         {
             var assembly = typeof(Plugin).Assembly;
-            var resourcePath = $"JellyfinAppleLyrics.AppleMusic.{fileName}";
+            var resourcePath = $"JellyfinAppleLyrics.Resources.web.{fileName.Replace("/", ".")}";
 
             using var stream = assembly.GetManifestResourceStream(resourcePath);
             if (stream == null)
