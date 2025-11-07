@@ -16,6 +16,7 @@ namespace JellyfinAppleLyrics;
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
     private readonly ILogger<Plugin> _logger;
+    private readonly ScriptInjector _scriptInjector;
 
     /// <summary>
     /// 插件实例
@@ -43,10 +44,12 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <param name="applicationPaths">应用程序路径</param>
     /// <param name="xmlSerializer">XML序列化器</param>
     /// <param name="logger">日志记录器</param>
-    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger<Plugin> logger)
+    /// <param name="loggerFactory">日志工厂</param>
+    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger<Plugin> logger, ILoggerFactory loggerFactory)
         : base(applicationPaths, xmlSerializer)
     {
         _logger = logger;
+        _scriptInjector = new ScriptInjector(applicationPaths, loggerFactory.CreateLogger<ScriptInjector>());
 
         _logger.LogInformation("--- JellyfinAppleLyrics Plugin: Listing Embedded Resource Names ---");
         var resourceNames = Assembly.GetExecutingAssembly().GetManifestResourceNames();
@@ -62,7 +65,28 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
             }
         }
         _logger.LogInformation("-----------------------------------------------------------------");
+        
         Instance = this;
+        
+        // 清理旧版本的脚本
+        _scriptInjector.CleanupOldScript();
+    }
+
+    /// <summary>
+    /// 注入脚本到 index.html
+    /// </summary>
+    public void InjectScript()
+    {
+        _scriptInjector.InjectScript();
+    }
+
+    /// <summary>
+    /// 卸载时移除脚本
+    /// </summary>
+    public override void OnUninstalling()
+    {
+        _scriptInjector.RemoveScript();
+        base.OnUninstalling();
     }
 
     /// <summary>

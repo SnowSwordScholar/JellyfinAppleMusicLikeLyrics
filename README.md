@@ -24,6 +24,35 @@
 - .NET 8.0+（用于编译）
 - 现代浏览器
 
+## ⚠️ 重要：Docker 用户必读
+
+**此插件需要修改 Jellyfin 的 `index.html` 文件来注入 JavaScript。** 如果你使用 Docker 运行 Jellyfin，**必须挂载 `index.html` 文件**：
+
+### Docker 命令行
+
+```bash
+docker run -d \
+  --name jellyfin \
+  -v /path/to/jellyfin/config:/config \
+  -v /path/to/jellyfin/config/index.html:/jellyfin/jellyfin-web/index.html \
+  # ... 其他配置
+  jellyfin/jellyfin
+```
+
+### Docker Compose
+
+```yaml
+services:
+  jellyfin:
+    image: jellyfin/jellyfin
+    volumes:
+      - /path/to/jellyfin/config:/config
+      - /path/to/jellyfin/config/index.html:/jellyfin/jellyfin-web/index.html
+      # ... 其他 volumes
+```
+
+**没有这个挂载，插件将无法工作！**
+
 ## 快速开始
 
 ### 编译
@@ -34,30 +63,86 @@ dotnet restore
 dotnet build --configuration Release
 ```
 
-### 安装
+### 安装步骤
 
-#### Linux/macOS
+#### 1. 安装插件 DLL
+
+##### Linux/macOS
 
 ```bash
 sudo mkdir -p /var/lib/jellyfin/plugins/AppleMusic
 sudo cp bin/Release/net8.0/JellyfinAppleLyrics.dll /var/lib/jellyfin/plugins/AppleMusic/
 sudo chown jellyfin:jellyfin /var/lib/jellyfin/plugins/AppleMusic/JellyfinAppleLyrics.dll
-sudo systemctl restart jellyfin
 ```
 
-#### Windows
+##### Windows
 
 ```powershell
 New-Item -ItemType Directory "C:\ProgramData\Jellyfin\data\plugins\AppleMusic" -Force
 Copy-Item "bin\Release\net8.0\JellyfinAppleLyrics.dll" "C:\ProgramData\Jellyfin\data\plugins\AppleMusic\"
+```
+
+##### Docker
+
+```bash
+docker cp bin/Release/net8.0/JellyfinAppleLyrics.dll <container_id>:/config/plugins/AppleMusic/
+```
+
+#### 2. 重启 Jellyfin
+
+```bash
+# Linux systemd
+sudo systemctl restart jellyfin
+
+# Docker
+docker restart <container_id>
+
+# Windows
 Restart-Service JellyfinServer
 ```
 
-#### Docker
+#### 3. 注入脚本到 index.html
+
+安装插件后，插件会**自动**尝试修改 `index.html`。但如果自动注入失败（特别是 Docker 用户），需要**手动**编辑：
+
+##### 方法 A：自动注入（推荐）
+
+1. 进入 Jellyfin 控制面板 -> 插件 -> Apple Music Lyrics
+2. 插件会在初始化时自动尝试注入脚本
+3. 重启 Jellyfin 以应用更改
+
+##### 方法 B：手动注入
+
+编辑 `index.html` 文件（Docker 用户编辑 `/path/to/config/index.html`）：
 
 ```bash
-docker cp bin/Release/net8.0/JellyfinAppleLyrics.dll <container_id>:/var/lib/jellyfin/plugins/AppleMusic/
-docker restart <container_id>
+# 找到 </body> 标签前，添加：
+<script plugin="Apple Music Lyrics" src="../applelyrics/init.js" defer></script>
+</body>
+```
+
+完整示例：
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- ... Jellyfin 的 head 内容 ... -->
+</head>
+<body>
+    <div id="apphost"></div>
+    <!-- ... 其他脚本 ... -->
+    <script plugin="Apple Music Lyrics" src="../applelyrics/init.js" defer></script>
+</body>
+</html>
+```
+
+#### 4. 再次重启 Jellyfin
+
+```bash
+# 应用 index.html 的更改
+sudo systemctl restart jellyfin  # Linux
+docker restart <container_id>    # Docker
 ```
 
 ## 使用
@@ -133,23 +218,126 @@ public async Task<ActionResult> GetLyrics(string itemId)
 
 ## 故障排除
 
-### 插件未加载
+### 🚫 插件已安装但没有效果
 
-- 检查 Jellyfin 日志：`tail -f /var/log/jellyfin/jellyfin.log | grep -i apple`
-- 确保 DLL 在正确的插件目录
-- 验证文件权限
+#### 1. 检查脚本是否已注入
 
-### 歌词不显示
+打开 `index.html` 文件（Docker 用户：`/path/to/config/index.html`），在文件末尾 `</body>` 标签前应该能看到：
 
-- 打开浏览器开发者工具（F12）检查 Console 错误
-- 验证 `/applelyrics/init.js` 能否访问
-- 检查浏览器控制台的 `[AppleMusic]` 前缀日志
+```html
+<script plugin="Apple Music Lyrics" version="x.x.x" src="../applelyrics/init.js" defer></script>
+</body>
+```
 
-### 配置页面卡顿
+**如果没有**，说明自动注入失败，请按照上面的"方法 B：手动注入"步骤操作。
 
-- 清除浏览器缓存
-- 检查网络请求（F12 -> Network 标签）
-- 查看 `/applelyrics/config` 端点的响应
+#### 2. Docker 用户特别检查
+
+确认 `index.html` 挂载成功：
+
+```bash
+docker inspect <container_name> | grep index.html
+```
+
+应该能看到：
+```
+"/path/to/config/index.html:/jellyfin/jellyfin-web/index.html"
+```
+
+#### 3. 检查浏览器控制台
+
+按 `F12` 打开开发者工具 -> Console 标签页，应该能看到：
+
+```
+[AppleMusic] Init script loaded
+[AppleMusic] Script injection initialized
+[AppleMusic] Waiting for Now Playing page...
+```
+
+**如果看不到这些日志**：
+- 脚本可能没有加载
+- 检查 Network 标签页，搜索 `init.js`，查看是否返回 404
+- 确认插件 DLL 已正确安装
+
+#### 4. 检查插件是否已启用
+
+进入 Jellyfin 控制面板 -> 插件 -> Apple Music Lyrics -> 确认"启用插件"选项已勾选
+
+### 🌐 浏览器报错
+
+如果浏览器控制台出现类似错误：
+
+```
+TypeError: 'get persisted' called on an object that does not implement interface PageTransitionEvent
+```
+
+**这是浏览器扩展冲突，不是插件问题。** 解决方法：
+
+1. 在隐私/无痕模式下测试
+2. 禁用浏览器扩展（特别是广告拦截器、隐私保护扩展）
+3. 换个浏览器测试
+
+### 🎵 脚本加载但没有视觉效果
+
+1. **确认正在播放音乐**（不是视频）
+2. 检查插件配置：
+   ```
+   控制面板 -> 插件 -> Apple Music Lyrics
+   确认"启用插件"已勾选
+   ```
+3. 清除浏览器缓存：`Ctrl+Shift+Delete`
+4. 硬刷新页面：`Ctrl+F5` (Windows/Linux) 或 `Cmd+Shift+R` (Mac)
+5. 查看浏览器控制台是否有 JavaScript 错误
+
+### 📝 插件未加载到 Jellyfin
+
+检查 Jellyfin 日志：
+
+```bash
+# Linux
+tail -f /var/log/jellyfin/jellyfin.log | grep -i "apple\|lyrics"
+
+# Docker
+docker logs -f <container_id> | grep -i "apple\|lyrics"
+```
+
+应该能看到：
+
+```
+[INF] --- JellyfinAppleLyrics Plugin: Listing Embedded Resource Names ---
+[INF] Found embedded resource: JellyfinAppleLyrics.Resources.web.init.js
+[INF] Found embedded resource: JellyfinAppleLyrics.Resources.web.ConfigPage.html
+```
+
+**如果没有这些日志**：
+- DLL 可能没有放在正确的位置
+- 检查文件权限：`ls -la /var/lib/jellyfin/plugins/AppleMusic/`
+- 重启 Jellyfin
+
+### 🔧 手动验证 API 端点
+
+测试插件的 REST API 是否工作：
+
+```bash
+# 测试配置端点
+curl http://localhost:8096/applelyrics/config
+
+# 测试脚本端点
+curl http://localhost:8096/applelyrics/init.js
+```
+
+如果返回 404，说明插件没有正确加载。
+
+### 🆘 仍然无法解决？
+
+提交 Issue 时请提供：
+
+1. Jellyfin 版本：`http://localhost:8096/web/index.html#!/dashboard` -> 关于
+2. 浏览器版本和操作系统
+3. 部署方式（Docker/裸机）
+4. Jellyfin 日志（带有 `[AppleMusic]` 或 `[INF]` 前缀的相关行）
+5. 浏览器控制台的完整错误信息（F12 -> Console）
+6. `index.html` 中是否包含插件的 `<script>` 标签
 
 ## 许可证
 
