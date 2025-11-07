@@ -1,0 +1,46 @@
+## Visual Studio Code
+.vscode/
+*.code-workspace
+
+## Build results
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+## User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## NuGet
+*.nupkg
+*.snupkg
+
+## Runtime
+.runtimes/
+
+## IDE
+.idea/
+*.swp
+*.swo
+*~
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Logs
+logs/
+*.log
+
+## Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+## Build output
+dist/
+build/

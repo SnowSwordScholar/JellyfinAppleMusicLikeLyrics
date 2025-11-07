@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Apple Music Lyrics Configuration</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-left: 4px solid #1DB954;
+            border-radius: 4px;
+        }
+        
+        .section h2 {
+            margin-top: 0;
+            color: #1DB954;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin: 15px 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        input[type="number"],
+        input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .range-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .range-container input[type="range"] {
+            flex: 1;
+            width: auto;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .range-container .value {
+            min-width: 50px;
+            text-align: right;
+            font-weight: 600;
+            color: #1DB954;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .checkbox-group label {
+            margin: 0;
+            flex: 1;
+        }
+        
+        button {
+            background: #1DB954;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #1ed760;
+        }
+        
+        button:active {
+            background: #1aa34a;
+        }
+        
+        .info {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #2e7d32;
+            margin-top: 10px;
+        }
+        
+        .warning {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #e65100;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Apple Music Lyrics Configuration</h1>
+        
+        <div class="section">
+            <h2>Plugin Status</h2>
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="isEnabled" checked>
+                    <label for="isEnabled">Enable Apple Music Lyrics Plugin</label>
+                </div>
+                <div class="info">
+                    启用此插件以在Now Playing视图中显示Apple Music风格的歌词和动态背景效果。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Visual Effects</h2>
+            
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="enableBackgroundBlur" checked>
+                    <label for="enableBackgroundBlur">Enable Background Blur</label>
+                </div>
+                <div class="info">
+                    为背景添加高斯模糊效果，使歌词更突出。
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="blurAmount">Blur Amount (0-100)</label>
+                <div class="range-container">
+                    <input type="range" id="blurAmount" min="0" max="100" value="30">
+                    <span class="value"><span id="blurValue">30</span>px</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="enableDynamicBlending" checked>
+                    <label for="enableDynamicBlending">Enable Dynamic Color Blending</label>
+                </div>
+                <div class="info">
+                    根据专辑封面自动提取主色调，应用于背景以创建和谐的视觉效果。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Lyrics Display</h2>
+            
+            <div class="form-group">
+                <label for="fontSize">Font Size (10-100)</label>
+                <div class="range-container">
+                    <input type="range" id="fontSize" min="10" max="100" value="32">
+                    <span class="value"><span id="fontSizeValue">32</span>px</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="enableAutoFetch" checked>
+                    <label for="enableAutoFetch">Enable Auto Fetch Lyrics</label>
+                </div>
+                <div class="info">
+                    自动从Jellyfin和在线来源获取歌词（仅当元数据可用时）。
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="saveSettings()">Save Settings</button>
+        <button onclick="resetSettings()" style="background: #666; margin-left: 10px;">Reset to Defaults</button>
+        
+        <div id="message" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        // 从API加载设置
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/plugins/JellyfinAppleLyrics/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    document.getElementById('isEnabled').checked = config.isEnabled !== false;
+                    document.getElementById('enableBackgroundBlur').checked = config.enableBackgroundBlur !== false;
+                    document.getElementById('blurAmount').value = config.blurAmount || 30;
+                    document.getElementById('enableDynamicBlending').checked = config.enableDynamicBlending !== false;
+                    document.getElementById('fontSize').value = config.fontSize || 32;
+                    document.getElementById('enableAutoFetch').checked = config.enableAutoFetch !== false;
+                    
+                    updateSliderValues();
+                }
+            } catch (error) {
+                console.warn('Could not load settings:', error);
+                // 使用默认值
+            }
+        }
+
+        // 更新滑块显示值
+        function updateSliderValues() {
+            document.getElementById('blurValue').textContent = document.getElementById('blurAmount').value;
+            document.getElementById('fontSizeValue').textContent = document.getElementById('fontSize').value;
+        }
+
+        // 添加滑块事件监听
+        document.getElementById('blurAmount').addEventListener('input', updateSliderValues);
+        document.getElementById('fontSize').addEventListener('input', updateSliderValues);
+
+        // 保存设置
+        async function saveSettings() {
+            const config = {
+                isEnabled: document.getElementById('isEnabled').checked,
+                enableBackgroundBlur: document.getElementById('enableBackgroundBlur').checked,
+                blurAmount: parseInt(document.getElementById('blurAmount').value),
+                enableDynamicBlending: document.getElementById('enableDynamicBlending').checked,
+                fontSize: parseInt(document.getElementById('fontSize').value),
+                enableAutoFetch: document.getElementById('enableAutoFetch').checked
+            };
+
+            try {
+                const response = await fetch('/api/plugins/JellyfinAppleLyrics/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                if (response.ok) {
+                    showMessage('✓ Settings saved successfully!', 'success');
+                    // 通知正在运行的页面重新加载配置
+                    window.opener?.postMessage({ type: 'RELOAD_CONFIG', config }, '*');
+                } else {
+                    showMessage('✗ Failed to save settings', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showMessage('✗ Error saving settings: ' + error.message, 'error');
+            }
+        }
+
+        // 重置为默认值
+        function resetSettings() {
+            if (confirm('Are you sure you want to reset to default settings?')) {
+                document.getElementById('isEnabled').checked = true;
+                document.getElementById('enableBackgroundBlur').checked = true;
+                document.getElementById('blurAmount').value = 30;
+                document.getElementById('enableDynamicBlending').checked = true;
+                document.getElementById('fontSize').value = 32;
+                document.getElementById('enableAutoFetch').checked = true;
+                updateSliderValues();
+                saveSettings();
+            }
+        }
+
+        // 显示消息
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.style.cssText = `
+                padding: 12px;
+                border-radius: 4px;
+                border-left: 4px solid ${type === 'success' ? '#4caf50' : '#f44336'};
+                background: ${type === 'success' ? '#e8f5e9' : '#ffebee'};
+                color: ${type === 'success' ? '#2e7d32' : '#c62828'};
+                animation: fadeIn 0.3s;
+            `;
+            setTimeout(() => {
+                messageDiv.textContent = '';
+                messageDiv.style.cssText = '';
+            }, 3000);
+        }
+
+        // 页面加载时读取设置
+        window.addEventListener('load', loadSettings);
+    </script>
+</body>
+</html>
