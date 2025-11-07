@@ -3,6 +3,8 @@
  * 在Jellyfin Now Playing视图中加载并初始化歌词组件
  */
 
+console.log('[AppleMusic] Init script loaded');
+
 (function() {
     'use strict';
 
@@ -22,9 +24,10 @@
             const saved = localStorage.getItem('appleMusicLyricsConfig');
             if (saved) {
                 Object.assign(config, JSON.parse(saved));
+                console.log('[AppleMusic] Config loaded from storage:', config);
             }
         } catch (e) {
-            console.warn('Failed to load config:', e);
+            console.warn('[AppleMusic] Failed to load config:', e);
         }
     }
 
@@ -32,8 +35,9 @@
     function saveConfig() {
         try {
             localStorage.setItem('appleMusicLyricsConfig', JSON.stringify(config));
+            console.log('[AppleMusic] Config saved to storage');
         } catch (e) {
-            console.warn('Failed to save config:', e);
+            console.warn('[AppleMusic] Failed to save config:', e);
         }
     }
 
@@ -65,20 +69,17 @@
         try {
             console.log('[AppleMusic] Initializing lyric player...');
 
-            // 加载核心CSS
-            await loadStyle(`${config.apiBase}/core.css`);
-
-            // 加载核心JavaScript
-            await loadScript(`${config.apiBase}/core.js`);
-
-            // 检查window.AmllCore是否可用
-            if (!window.AmllCore) {
-                console.warn('[AppleMusic] AmllCore not found, retrying...');
-                setTimeout(initLyricPlayer, 1000);
-                return;
+            // 检查是否有API端点
+            try {
+                const response = await fetch(`${config.apiBase}/config`);
+                if (!response.ok) {
+                    console.warn('[AppleMusic] Config API not available');
+                } else {
+                    console.log('[AppleMusic] Config API available');
+                }
+            } catch (e) {
+                console.warn('[AppleMusic] Could not reach config API:', e);
             }
-
-            console.log('[AppleMusic] AmllCore loaded successfully');
 
             // 等待Now Playing页面出现
             waitForNowPlayingPage();
@@ -90,27 +91,37 @@
 
     // 等待Now Playing页面
     function waitForNowPlayingPage() {
-        const observer = new MutationObserver(() => {
-            const nowPlayingPage = document.querySelector('.nowPlayingPage');
-            if (nowPlayingPage) {
+        console.log('[AppleMusic] Waiting for Now Playing page...');
+        
+        // 首先检查页面是否已存在
+        let nowPlayingPage = document.querySelector('[data-testid="nowPlayingPage"], .nowPlayingPage, [class*="nowPlaying"]');
+        if (nowPlayingPage) {
+            console.log('[AppleMusic] Now Playing page found immediately');
+            setupNowPlayingLyrics(nowPlayingPage);
+            return;
+        }
+
+        // 使用MutationObserver监听页面变化
+        const observer = new MutationObserver((mutations) => {
+            // 定期检查页面是否出现（避免过于频繁）
+            const found = document.querySelector('[data-testid="nowPlayingPage"], .nowPlayingPage, [class*="nowPlaying"]');
+            if (found) {
                 console.log('[AppleMusic] Now Playing page detected');
                 observer.disconnect();
-                setupNowPlayingLyrics(nowPlayingPage);
+                setupNowPlayingLyrics(found);
             }
         });
 
-        observer.observe(document.body, {
+        observer.observe(document.documentElement, {
             childList: true,
             subtree: true,
             attributes: false
         });
 
-        // 如果页面已存在，立即检查
-        const nowPlayingPage = document.querySelector('.nowPlayingPage');
-        if (nowPlayingPage) {
-            observer.disconnect();
-            setupNowPlayingLyrics(nowPlayingPage);
-        }
+        // 设置超时以防止无限等待
+        setTimeout(() => {
+            console.log('[AppleMusic] Still waiting for Now Playing page...');
+        }, 5000);
     }
 
     // 设置Now Playing歌词显示

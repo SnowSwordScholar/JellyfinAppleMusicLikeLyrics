@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace JellyfinAppleLyrics;
 
@@ -50,7 +51,47 @@ public class AppleLyricsController : ControllerBase
     [HttpGet("init.js")]
     public ActionResult GetInitJs()
     {
-        return ServeEmbeddedResource("init.js", "application/javascript");
+        var content = GetEmbeddedResourceContent("init.js");
+        if (content == null)
+        {
+            return NotFound("init.js not found");
+        }
+        return Content(content, "application/javascript; charset=utf-8");
+    }
+
+    /// <summary>
+    /// 获取注入脚本（用于页面注入）
+    /// </summary>
+    [HttpGet("inject.js")]
+    public ActionResult GetInjectJs()
+    {
+        var content = GetEmbeddedResourceContent("injector.js");
+        if (content == null)
+        {
+            return NotFound("injector.js not found");
+        }
+        return Content(content, "application/javascript; charset=utf-8");
+    }
+
+    /// <summary>
+    /// 获取注入脚本（用于页面注入）
+    /// </summary>
+    [HttpGet("inject-direct.js")]
+    public ActionResult GetInjectDirectJs()
+    {
+        var script = @"
+(function() {
+    console.log('[AppleMusic] Direct injection...');
+    var script = document.createElement('script');
+    script.src = '/applelyrics/init.js?v=' + Date.now();
+    script.async = true;
+    script.onerror = function() {
+        console.error('[AppleMusic] Failed to load init script');
+    };
+    document.head.appendChild(script);
+})();
+";
+        return Content(script, "application/javascript; charset=utf-8");
     }
 
     /// <summary>
@@ -200,6 +241,33 @@ public class AppleLyricsController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"Error serving resource: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 从嵌入资源中获取内容为字符串
+    /// </summary>
+    private string? GetEmbeddedResourceContent(string fileName)
+    {
+        try
+        {
+            var assembly = typeof(Plugin).Assembly;
+            var resourcePath = $"JellyfinAppleLyrics.AppleMusic.{fileName}";
+
+            using var stream = assembly.GetManifestResourceStream(resourcePath);
+            if (stream == null)
+            {
+                Console.WriteLine($"[AppleMusic] Resource not found: {resourcePath}");
+                return null;
+            }
+
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AppleMusic] Error reading resource: {ex.Message}");
+            return null;
         }
     }
 }

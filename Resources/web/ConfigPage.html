@@ -222,9 +222,11 @@
         // 从API加载设置
         async function loadSettings() {
             try {
-                const response = await fetch('/api/plugins/JellyfinAppleLyrics/config');
+                console.log('[AppleMusic] Loading settings...');
+                const response = await fetch('/applelyrics/config');
                 if (response.ok) {
                     const config = await response.json();
+                    console.log('[AppleMusic] Settings loaded:', config);
                     document.getElementById('isEnabled').checked = config.isEnabled !== false;
                     document.getElementById('enableBackgroundBlur').checked = config.enableBackgroundBlur !== false;
                     document.getElementById('blurAmount').value = config.blurAmount || 30;
@@ -233,10 +235,12 @@
                     document.getElementById('enableAutoFetch').checked = config.enableAutoFetch !== false;
                     
                     updateSliderValues();
+                } else {
+                    console.log('[AppleMusic] Could not load settings, using defaults');
                 }
             } catch (error) {
-                console.warn('Could not load settings:', error);
-                // 使用默认值
+                console.warn('[AppleMusic] Error loading settings:', error);
+                showMessage('Note: Using default settings', 'info');
             }
         }
 
@@ -262,7 +266,7 @@
             };
 
             try {
-                const response = await fetch('/api/plugins/JellyfinAppleLyrics/config', {
+                const response = await fetch('/applelyrics/config', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -272,14 +276,12 @@
 
                 if (response.ok) {
                     showMessage('✓ Settings saved successfully!', 'success');
-                    // 通知正在运行的页面重新加载配置
-                    window.opener?.postMessage({ type: 'RELOAD_CONFIG', config }, '*');
                 } else {
                     showMessage('✗ Failed to save settings', 'error');
                 }
             } catch (error) {
-                console.error('Error saving settings:', error);
-                showMessage('✗ Error saving settings: ' + error.message, 'error');
+                console.error('[AppleMusic] Error saving settings:', error);
+                showMessage('✗ Error: ' + error.message, 'error');
             }
         }
 
@@ -304,19 +306,31 @@
             messageDiv.style.cssText = `
                 padding: 12px;
                 border-radius: 4px;
-                border-left: 4px solid ${type === 'success' ? '#4caf50' : '#f44336'};
-                background: ${type === 'success' ? '#e8f5e9' : '#ffebee'};
-                color: ${type === 'success' ? '#2e7d32' : '#c62828'};
+                border-left: 4px solid ${type === 'success' ? '#4caf50' : type === 'info' ? '#2196F3' : '#f44336'};
+                background: ${type === 'success' ? '#e8f5e9' : type === 'info' ? '#e3f2fd' : '#ffebee'};
+                color: ${type === 'success' ? '#2e7d32' : type === 'info' ? '#1565c0' : '#c62828'};
                 animation: fadeIn 0.3s;
             `;
             setTimeout(() => {
-                messageDiv.textContent = '';
-                messageDiv.style.cssText = '';
+                if (type !== 'error') {
+                    messageDiv.textContent = '';
+                    messageDiv.style.cssText = '';
+                }
             }, 3000);
         }
 
         // 页面加载时读取设置
-        window.addEventListener('load', loadSettings);
+        console.log('[AppleMusic] Config page loaded');
+        window.addEventListener('load', function() {
+            console.log('[AppleMusic] Window loaded, loading settings');
+            loadSettings();
+        });
+        
+        // 如果页面已经加载完成
+        if (document.readyState === 'complete') {
+            console.log('[AppleMusic] Document complete, loading settings');
+            loadSettings();
+        }
     </script>
 </body>
 </html>
