@@ -6,7 +6,18 @@
 (function() {
     'use strict';
 
-    console.log('[AMLL] Lyrics interceptor loaded');
+    // ========== 调试模式配置 ==========
+    // 设置为 true 开启详细调试日志，false 为生产模式
+    const DEBUG_MODE = true;
+    
+    // 调试日志函数
+    const debugLog = (...args) => {
+        if (DEBUG_MODE) {
+            console.log('[AMLL DEBUG]', ...args);
+        }
+    };
+    
+    console.log('[AMLL] Lyrics interceptor loaded (DEBUG_MODE:', DEBUG_MODE, ')');
 
     // 播放管理器引用（从页面事件中获取）
     let playbackManagerRef = null;
@@ -78,9 +89,15 @@
             return;
         }
 
+        debugLog('Found lyrics container:', lyricsContainer);
+        debugLog('Container identity check - last:', lastInterceptedContainer, 'current:', lyricsContainer, 'same?:', lastInterceptedContainer === lyricsContainer);
+        debugLog('isIntercepting flag:', isIntercepting);
+
         // 检测容器是否变化(切换歌曲/重新进入会创建新容器)
         if (lastInterceptedContainer && lastInterceptedContainer !== lyricsContainer) {
             console.log('[AMLL] Detected new lyrics container (song changed), resetting interception');
+            debugLog('Old container:', lastInterceptedContainer);
+            debugLog('New container:', lyricsContainer);
             isIntercepting = false;
             lastInterceptedContainer = null;
         }
@@ -95,7 +112,9 @@
         
         isIntercepting = true;
         lastInterceptedContainer = lyricsContainer;
-        console.log('[AMLL] Intercepting lyrics container:', lyricsContainer);
+        console.log('[AMLL] ✅ Starting interception on new container');
+        debugLog('Container reference stored:', lyricsContainer);
+        debugLog('Container HTML:', lyricsContainer.outerHTML.substring(0, 200));
 
         // 轮询定时器的引用(在外部声明,以便在 MutationObserver 中访问)
         let pollInterval = null;
@@ -410,7 +429,9 @@
             // 开始同步
             startLyricsSync(scrollContainer, lyricsData);
 
-            console.log('[AMLL] Rendering complete');
+            console.log('[AMLL] ✅ Rendering complete - AMLL style applied');
+            debugLog('Lyrics count:', lyricsData.length);
+            debugLog('Container:', container);
         } catch (error) {
             console.error('[AMLL] Error replacing lyrics:', error);
         }
@@ -668,14 +689,76 @@
         
         // 方法2: 使用 MutationObserver 监听 DOM 变化（Jellyfin 使用 SPA 架构）
         const observer = new MutationObserver((mutations) => {
+            debugLog('MutationObserver triggered, mutations count:', mutations.length);
+            
             for (const mutation of mutations) {
+                debugLog('Mutation type:', mutation.type, 'target:', mutation.target.tagName, mutation.target.className);
+                
                 if (mutation.type === 'childList') {
+                    debugLog('ChildList mutation - added:', mutation.addedNodes.length, 'removed:', mutation.removedNodes.length);
+                    
                     // 检查是否添加了歌词页面
                     for (const node of mutation.addedNodes) {
+                        if (node.nodeType !== 1) continue; // 只处理元素节点
+                        
+                        debugLog('Added node:', node.tagName, node.id, node.className);
+                        
                         if (node.id === 'lyricPage' || (node.querySelector && node.querySelector('#lyricPage'))) {
                             console.log('[AMLL] Lyrics page detected via MutationObserver!');
                             checkForLyricsPage();
                             return;
+                        }
+                        
+                        // 检查是否添加了新的歌词容器（歌曲切换）
+                        if (node.classList && node.classList.contains('lyricsContainer')) {
+                            console.log('[AMLL] New lyrics container detected via MutationObserver (song changed)!');
+                            debugLog('Container element:', node);
+                            // 重置拦截标志，允许重新拦截
+                            isIntercepting = false;
+                            lastInterceptedContainer = null;
+                            checkForLyricsPage();
+                            return;
+                        }
+                        
+                        // 检查添加的节点内部是否包含新的歌词容器
+                        if (node.querySelector && node.querySelector('.lyricsContainer')) {
+                            console.log('[AMLL] New lyrics container detected in added node (song changed)!');
+                            const container = node.querySelector('.lyricsContainer');
+                            debugLog('Container found in node:', container);
+                            isIntercepting = false;
+                            lastInterceptedContainer = null;
+                            checkForLyricsPage();
+                            return;
+                        }
+                    }
+                    
+                    // 检查是否移除了歌词容器或我们的 AMLL 容器
+                    for (const node of mutation.removedNodes) {
+                        if (node.nodeType !== 1) continue;
+                        
+                        debugLog('Removed node:', node.tagName, node.id, node.className);
+                        
+                        // 检测到我们的 AMLL 容器被移除（歌曲切换！）
+                        if (node.classList && node.classList.contains('amll-lyrics-container')) {
+                            console.log('[AMLL] ⚠️ Our AMLL container was removed by Jellyfin (song changed)! Re-intercepting...');
+                            debugLog('Removed AMLL container:', node);
+                            // 重置状态并立即重新拦截
+                            isIntercepting = false;
+                            lastInterceptedContainer = null;
+                            // 延迟一点让 Jellyfin 先加载原生歌词
+                            setTimeout(() => {
+                                console.log('[AMLL] Re-intercepting after song change...');
+                                checkForLyricsPage();
+                            }, 100);
+                            return;
+                        }
+                        
+                        if (node.classList && node.classList.contains('lyricsContainer')) {
+                            console.log('[AMLL] Lyrics container removed (preparing for song change?)');
+                            debugLog('Removed container:', node);
+                            // 容器被移除，重置状态
+                            isIntercepting = false;
+                            lastInterceptedContainer = null;
                         }
                     }
                 }
