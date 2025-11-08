@@ -12,6 +12,8 @@
     let playbackManagerRef = null;
     let isIntercepting = false; // 防止重复拦截标志
     let interceptionAttempts = 0; // 拦截尝试计数
+    let currentSyncInterval = null; // 当前的同步定时器
+    let currentHashChangeHandler = null; // 当前的hash变化监听器
 
     // 尝试从全局获取 playbackManager
     function tryGetPlaybackManager() {
@@ -142,12 +144,26 @@
         
         if (existingLyrics && !alreadyAMLL) {
             console.log('[AMLL] Lyrics already present, replacing immediately...');
-            replaceLyricsWithAMLL(lyricsContainer);
             observer.disconnect();
+            replaceLyricsWithAMLL(lyricsContainer);
             return; // 立即返回,不再继续轮询
         } else if (alreadyAMLL) {
-            console.log('[AMLL] AMLL lyrics already rendered, skipping...');
+            console.log('[AMLL] AMLL lyrics already rendered, extracting lyrics data and restarting sync...');
             observer.disconnect();
+            // 从已渲染的 AMLL 歌词中提取数据
+            const lyricsLines = lyricsContainer.querySelectorAll('.amll-lyric-line');
+            if (lyricsLines.length > 0) {
+                const lyricsData = Array.from(lyricsLines).map(line => ({
+                    Text: line.textContent,
+                    Start: parseInt(line.getAttribute('data-time') || '0') // 使用 data-time 而不是 data-start
+                }));
+                console.log('[AMLL] Extracted', lyricsData.length, 'lyrics lines from existing AMLL container');
+                // 重新启动同步(处理退出后再进入的情况)
+                const scrollContainer = lyricsContainer.querySelector('.amll-scroll-container');
+                if (scrollContainer) {
+                    startLyricsSync(scrollContainer, lyricsData);
+                }
+            }
             return;
         } else {
             console.log('[AMLL] No lyrics yet, waiting for them to load...');
@@ -165,10 +181,9 @@
                     observer.disconnect();
                     clearInterval(pollInterval);
                     // 不重置 isIntercepting,保持拦截状态直到离开页面
+                    clearInterval(pollInterval);
                 } else if (pollCount >= maxPolls) {
                     console.warn('[AMLL] Polling timeout - no lyrics found after 10 seconds');
-                    console.log('[AMLL] Container content:', lyricsContainer.innerHTML);
-                    console.log('[AMLL] Container has lyrics elements:', lyricsContainer.querySelectorAll('.lyricsLine').length);
                     isIntercepting = false; // 重置标志以允许下次尝试
                     clearInterval(pollInterval);
                 } else if (pollCount % 10 === 0) {
@@ -262,9 +277,13 @@
             const amllContainer = document.createElement('div');
             amllContainer.className = 'amll-lyrics-container';
             amllContainer.style.cssText = `
-                position: relative;
-                width: 100%;
-                height: 100%;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100vw;
+                height: 100vh;
                 overflow: hidden;
                 background: transparent;
             `;
@@ -416,8 +435,19 @@
 
     // 同步歌词
     function startLyricsSync(container, lyrics) {
+        // 清理旧的同步定时器
+        if (currentSyncInterval) {
+            clearInterval(currentSyncInterval);
+            console.log('[AMLL] Cleared previous sync interval');
+        }
+        
+        // 清理旧的hash监听器
+        if (currentHashChangeHandler) {
+            window.removeEventListener('hashchange', currentHashChangeHandler);
+            console.log('[AMLL] Removed previous hash change handler');
+        }
+
         let currentIndex = -1;
-        let syncInterval;
         let debugCounter = 0;
 
         function updateLyrics() {
@@ -454,18 +484,14 @@
         }
 
         // 每100ms更新一次
-        syncInterval = setInterval(updateLyrics, 100);
-
-        // 清理函数
-        window.addEventListener('beforeunload', () => {
-            if (syncInterval) clearInterval(syncInterval);
-        });
+        currentSyncInterval = setInterval(updateLyrics, 100);
 
         // 监听路由变化，离开歌词页面时清理
-        const hashChangeHandler = () => {
+        currentHashChangeHandler = () => {
             if (!window.location.hash.includes('/lyrics')) {
-                if (syncInterval) {
-                    clearInterval(syncInterval);
+                if (currentSyncInterval) {
+                    clearInterval(currentSyncInterval);
+                    currentSyncInterval = null;
                     console.log('[AMLL] Sync stopped');
                 }
                 // 移除背景
@@ -473,7 +499,7 @@
                 if (bg) bg.remove();
             }
         };
-        window.addEventListener('hashchange', hashChangeHandler);
+        window.addEventListener('hashchange', currentHashChangeHandler);
 
         console.log('[AMLL] Lyrics sync started');
     }
