@@ -181,7 +181,7 @@
             
             for (const mutation of mutations) {
                 if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                    console.log(`[AMLL] ${mutation.addedNodes.length} nodes added to lyrics container`);
+                    debugLog(`${mutation.addedNodes.length} nodes added to lyrics container`);
                     
                     // 检查添加的节点本身是否是歌词
                     const hasDirectLyrics = Array.from(mutation.addedNodes).some(node => 
@@ -257,8 +257,12 @@
                 }
             }
             return;
-        } else {
-            console.log('[AMLL] No lyrics yet, waiting for them to load...');
+        }
+        
+        if (lyricsLines.length === 0) {
+            debugLog('No lyrics yet, waiting for them to load...');
+            
+            // 使用轮询检查歌词是否已加载
             
             // 添加轮询作为备用方案 - 每100ms检查一次是否有歌词
             let pollCount = 0;
@@ -268,17 +272,17 @@
                 const lyrics = lyricsContainer.querySelector('.lyricsLine');
                 
                 if (lyrics) {
-                    console.log(`[AMLL] Lyrics detected via polling after ${pollCount * 100}ms!`);
+                    debugLog(`Lyrics detected via polling after ${pollCount * 100}ms!`);
                     clearInterval(pollInterval);
                     observer.disconnect();
                     replaceLyricsWithAMLL(lyricsContainer);
                     // 不重置 isIntercepting,保持拦截状态直到离开页面
                 } else if (pollCount >= maxPolls) {
-                    console.warn('[AMLL] Polling timeout - no lyrics found after 10 seconds');
+                    debugLog('Polling timeout - no lyrics found after 10 seconds');
                     clearInterval(pollInterval);
                     isIntercepting = false; // 重置标志以允许下次尝试
                 } else if (pollCount % 10 === 0) {
-                    console.log(`[AMLL] Still polling for lyrics... (${pollCount}/${maxPolls})`);
+                    debugLog(`Still polling for lyrics... (${pollCount}/${maxPolls})`);
                 }
             }, 100);
         }
@@ -302,7 +306,7 @@
             }
         });
 
-        console.log(`[AMLL] Extracted ${lyrics.length} lyrics lines`);
+        debugLog(`Extracted ${lyrics.length} lyrics lines`);
         return lyrics.length > 0 ? lyrics : null;
     }
 
@@ -894,9 +898,10 @@
 
     // 初始化
     async function init() {
-        console.log('[AMLL] Initializing...');
-        console.log('[AMLL] Current URL:', window.location.href);
-        console.log('[AMLL] Current hash:', window.location.hash);
+        // 初始化
+        debugLog('Initializing...');
+        debugLog('Current URL:', window.location.href);
+        debugLog('Current hash:', window.location.hash);
         
         // 加载配置
         await loadConfig();
@@ -904,9 +909,9 @@
         // 尝试获取 playbackManager
         playbackManagerRef = tryGetPlaybackManager();
         if (playbackManagerRef) {
-            console.log('[AMLL] PlaybackManager found');
+            debugLog('PlaybackManager found');
         } else {
-            console.log('[AMLL] PlaybackManager not found, will use HTML5 media element');
+            debugLog('PlaybackManager not found, will use HTML5 media element');
         }
         
         // 检查是否进入歌词页面
@@ -915,7 +920,7 @@
             
             // 检查 hash
             if (currentHash.includes('/lyrics')) {
-                console.log('[AMLL] Lyrics route detected via hash:', currentHash);
+                debugLog('Lyrics route detected via hash:', currentHash);
                 interceptLyricsRendering();
                 return true;
             }
@@ -923,7 +928,7 @@
             // 检查 DOM 是否存在歌词页面
             const lyricPage = document.querySelector('#lyricPage');
             if (lyricPage) {
-                console.log('[AMLL] Lyrics page detected via DOM!');
+                debugLog('Lyrics page detected via DOM!');
                 interceptLyricsRendering();
                 return true;
             }
@@ -933,16 +938,16 @@
 
         // 立即检查
         if (!checkForLyricsPage()) {
-            console.log('[AMLL] Not on lyrics page, setting up watchers...');
+            debugLog('Not on lyrics page, setting up watchers...');
         }
 
         // 方法1: 监听 hashchange
         window.addEventListener('hashchange', (e) => {
-            console.log('[AMLL] Hash changed from', e.oldURL, 'to', e.newURL);
+            debugLog('Hash changed from', e.oldURL, 'to', e.newURL);
             
             // 如果离开歌词页面,重置拦截标志
             if (!e.newURL.includes('/lyrics')) {
-                console.log('[AMLL] Left lyrics page, resetting interception flag');
+                debugLog('Left lyrics page, resetting interception flag');
                 isIntercepting = false;
                 interceptionAttempts = 0;
                 lastInterceptedContainer = null;
@@ -968,14 +973,14 @@
                         debugLog('Added node:', node.tagName, node.id, node.className);
                         
                         if (node.id === 'lyricPage' || (node.querySelector && node.querySelector('#lyricPage'))) {
-                            console.log('[AMLL] Lyrics page detected via MutationObserver!');
+                            debugLog('Lyrics page detected via MutationObserver!');
                             checkForLyricsPage();
                             return;
                         }
                         
                         // 检查是否添加了新的歌词容器（歌曲切换）
                         if (node.classList && node.classList.contains('lyricsContainer')) {
-                            console.log('[AMLL] New lyrics container detected via MutationObserver (song changed)!');
+                            debugLog('New lyrics container detected via MutationObserver (song changed)!');
                             debugLog('Container element:', node);
                             // 重置拦截标志，允许重新拦截
                             isIntercepting = false;
@@ -986,7 +991,7 @@
                         
                         // 检查添加的节点内部是否包含新的歌词容器
                         if (node.querySelector && node.querySelector('.lyricsContainer')) {
-                            console.log('[AMLL] New lyrics container detected in added node (song changed)!');
+                            debugLog('New lyrics container detected in added node (song changed)!');
                             const container = node.querySelector('.lyricsContainer');
                             debugLog('Container found in node:', container);
                             isIntercepting = false;
@@ -1004,21 +1009,21 @@
                         
                         // 检测到我们的 AMLL 容器被移除（歌曲切换！）
                         if (node.classList && node.classList.contains('amll-lyrics-container')) {
-                            console.log('[AMLL] ⚠️ Our AMLL container was removed by Jellyfin (song changed)! Re-intercepting...');
+                            debugLog('⚠️ Our AMLL container was removed by Jellyfin (song changed)! Re-intercepting...');
                             debugLog('Removed AMLL container:', node);
                             // 重置状态并立即重新拦截
                             isIntercepting = false;
                             lastInterceptedContainer = null;
                             // 延迟一点让 Jellyfin 先加载原生歌词
                             setTimeout(() => {
-                                console.log('[AMLL] Re-intercepting after song change...');
+                                debugLog('Re-intercepting after song change...');
                                 checkForLyricsPage();
                             }, 100);
                             return;
                         }
                         
                         if (node.classList && node.classList.contains('lyricsContainer')) {
-                            console.log('[AMLL] Lyrics container removed (preparing for song change?)');
+                            debugLog('Lyrics container removed (preparing for song change?)');
                             debugLog('Removed container:', node);
                             // 容器被移除，重置状态
                             isIntercepting = false;
@@ -1046,10 +1051,10 @@
         // 60秒后停止定期检查（但 MutationObserver 继续工作）
         setTimeout(() => {
             clearInterval(checkInterval);
-            console.log('[AMLL] Periodic check stopped, MutationObserver still active');
+            debugLog('Periodic check stopped, MutationObserver still active');
         }, 60000);
-        
-        console.log('[AMLL] All watchers registered (hashchange + MutationObserver + periodic)');
+            
+        debugLog('All watchers registered (hashchange + MutationObserver + periodic)');
     }
 
     // 启动
