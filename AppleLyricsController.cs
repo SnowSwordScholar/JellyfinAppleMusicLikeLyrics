@@ -170,13 +170,15 @@ public class AppleLyricsController : ControllerBase
                 config.ActiveBlur,
                 
                 // 渐变模糊设置
+                config.EnableGradientBlur,
                 config.GradientBlurAmount,
-                config.GradientBlurRange,
                 
                 // 动画设置
                 config.ScrollDuration,
                 config.SpringSpeed,
                 config.TransformDuration,
+                config.ScrollPositionLandscape,
+                config.ScrollPositionPortrait,
                 
                 // 其他设置
                 config.EnableAutoFetch

@@ -98,14 +98,14 @@ public class PluginConfiguration : BasePluginConfiguration
     // ==================== 渐变模糊设置 / Gradient Blur Settings ====================
     
     /// <summary>
+    /// 是否启用渐变模糊效果 / Enable Gradient Blur Effect
+    /// </summary>
+    public bool EnableGradientBlur { get; set; } = true;
+
+    /// <summary>
     /// 活跃歌词前后的渐变模糊程度 / Gradient Blur Around Active Lyric (0-10)
     /// </summary>
     public double GradientBlurAmount { get; set; } = 1.0;
-
-    /// <summary>
-    /// 渐变模糊影响范围(行数) / Gradient Blur Range (lines)
-    /// </summary>
-    public int GradientBlurRange { get; set; } = 3;
 
     // ==================== 动画设置 / Animation Settings ====================
     
@@ -123,6 +123,16 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Transform过渡时长 / Transform Transition Duration (ms)
     /// </summary>
     public int TransformDuration { get; set; } = 800;
+
+    /// <summary>
+    /// 横屏活跃歌词位置(屏幕百分比) / Landscape Active Lyric Position (0.0-1.0, 0=top, 1=bottom)
+    /// </summary>
+    public double ScrollPositionLandscape { get; set; } = 0.35;
+
+    /// <summary>
+    /// 竖屏活跃歌词位置(屏幕百分比) / Portrait Active Lyric Position (0.0-1.0, 0=top, 1=bottom)
+    /// </summary>
+    public double ScrollPositionPortrait { get; set; } = 0.35;
 
     // ==================== 其他设置 / Other Settings ====================
     

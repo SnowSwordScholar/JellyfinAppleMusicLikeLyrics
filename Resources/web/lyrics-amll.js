@@ -36,13 +36,15 @@
         ActiveBlur: 0.0,
         
         // 渐变模糊设置
+        EnableGradientBlur: true,
         GradientBlurAmount: 1.0,
-        GradientBlurRange: 3,
         
         // 动画设置
         ScrollDuration: 1000,
         SpringSpeed: 1.0,
-        TransformDuration: 800
+        TransformDuration: 800,
+        ScrollPositionLandscape: 0.35,
+        ScrollPositionPortrait: 0.35
     };
     
     // 调试日志函数
@@ -560,18 +562,30 @@
                 text-shadow: 0 1px 6px rgba(0,0,0,${cfg.InactiveShadowIntensity});
             }
 
-            /* 渐变模糊效果 - 活跃歌词前后的歌词 */
+            /* 渐变模糊效果 - 活跃歌词前后的歌词，距离越远模糊越强 */
             .amll-lyric-line.gradient-blur-1 {
-                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 0.3}px) brightness(${cfg.InactiveBrightness * 0.95});
-                opacity: ${cfg.InactiveOpacity * 0.85};
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 0.3}px) brightness(${cfg.InactiveBrightness * 0.96});
+                opacity: ${cfg.InactiveOpacity * 0.9};
             }
             .amll-lyric-line.gradient-blur-2 {
-                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 0.6}px) brightness(${cfg.InactiveBrightness * 0.9});
-                opacity: ${cfg.InactiveOpacity * 0.7};
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 0.6}px) brightness(${cfg.InactiveBrightness * 0.92});
+                opacity: ${cfg.InactiveOpacity * 0.8};
             }
             .amll-lyric-line.gradient-blur-3 {
-                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount}px) brightness(${cfg.InactiveBrightness * 0.85});
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 1.0}px) brightness(${cfg.InactiveBrightness * 0.88});
+                opacity: ${cfg.InactiveOpacity * 0.7};
+            }
+            .amll-lyric-line.gradient-blur-4 {
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 1.5}px) brightness(${cfg.InactiveBrightness * 0.84});
                 opacity: ${cfg.InactiveOpacity * 0.6};
+            }
+            .amll-lyric-line.gradient-blur-5 {
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 2.0}px) brightness(${cfg.InactiveBrightness * 0.80});
+                opacity: ${cfg.InactiveOpacity * 0.55};
+            }
+            .amll-lyric-line.gradient-blur-far {
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 2.5}px) brightness(${cfg.InactiveBrightness * 0.76});
+                opacity: ${cfg.InactiveOpacity * 0.5};
             }
 
             /* Hover 效果 - Apple Music 风格 */
@@ -735,22 +749,36 @@
     // 更新活跃歌词
     function updateActiveLyric(scrollContainer, index) {
         const cfg = AMLL_CONFIG;
-        const gradientRange = cfg.GradientBlurRange;
+        const enableGradient = cfg.EnableGradientBlur;
         
         // 移除所有高亮和渐变类
         const allLines = scrollContainer.querySelectorAll('.amll-lyric-line');
         allLines.forEach((line, i) => {
-            line.classList.remove('active', 'gradient-blur-1', 'gradient-blur-2', 'gradient-blur-3');
+            line.classList.remove('active', 'gradient-blur-1', 'gradient-blur-2', 'gradient-blur-3', 
+                                   'gradient-blur-4', 'gradient-blur-5', 'gradient-blur-far');
             
-            // 计算距离当前活跃歌词的距离
-            const lineIndex = parseInt(line.getAttribute('data-index'));
-            const distance = Math.abs(lineIndex - index);
-            
-            // 应用渐变模糊效果
-            if (distance > 0 && distance <= gradientRange) {
-                if (distance <= Math.min(gradientRange, 3)) {
-                    line.classList.add(`gradient-blur-${distance}`);
-                    debugLog(`Applied gradient-blur-${distance} to line ${lineIndex}`);
+            // 应用渐变模糊效果（如果启用）
+            if (enableGradient) {
+                const lineIndex = parseInt(line.getAttribute('data-index'));
+                const distance = Math.abs(lineIndex - index);
+                
+                // 根据距离应用不同级别的模糊，距离越远模糊越强
+                if (distance > 0) {
+                    if (distance === 1) {
+                        line.classList.add('gradient-blur-1');
+                    } else if (distance === 2) {
+                        line.classList.add('gradient-blur-2');
+                    } else if (distance === 3) {
+                        line.classList.add('gradient-blur-3');
+                    } else if (distance === 4) {
+                        line.classList.add('gradient-blur-4');
+                    } else if (distance === 5) {
+                        line.classList.add('gradient-blur-5');
+                    } else {
+                        // 距离超过5行，使用最强模糊
+                        line.classList.add('gradient-blur-far');
+                    }
+                    debugLog(`Applied gradient blur to line ${lineIndex}, distance: ${distance}`);
                 }
             }
         });
@@ -768,9 +796,10 @@
                 const lineRect = currentLine.getBoundingClientRect();
                 const lineTopRelative = lineRect.top - containerRect.top + scrollContainer.scrollTop;
                 
-                // 将歌词滚动到屏幕上方35%的位置 (AMLL默认)
-                // containerRect.height * 0.35 = 从顶部35%的位置
-                const targetPosition = containerRect.height * 0.35;
+                // 根据设备类型选择滚动位置配置
+                const isMobile = isMobileDevice();
+                const scrollPosition = isMobile ? cfg.ScrollPositionPortrait : cfg.ScrollPositionLandscape;
+                const targetPosition = containerRect.height * scrollPosition;
                 const scrollTo = lineTopRelative - targetPosition + (lineRect.height / 2);
                 
                 console.log('[AMLL] Scroll:', {

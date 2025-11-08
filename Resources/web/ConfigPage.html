@@ -143,7 +143,7 @@
                             <label class="inputLabel" for="InactiveShadowIntensity">
                                 阴影强度 / Shadow Intensity: <span id="InactiveShadowIntensityValue" class="rangeValue">0.5</span>
                             </label>
-                            <input id="InactiveShadowIntensity" type="range" is="emby-input" min="0" max="1" step="0.05" />
+                            <input id="InactiveShadowIntensity" type="range" is="emby-input" min="0" max="1" step="0.01" />
                             <div class="fieldDescription">非活跃歌词的阴影强度 / Shadow intensity of inactive lyrics</div>
                         </div>
                         
@@ -188,7 +188,7 @@
                             <label class="inputLabel" for="ActiveShadowIntensity">
                                 阴影强度 / Shadow Intensity: <span id="ActiveShadowIntensityValue" class="rangeValue">0.15</span>
                             </label>
-                            <input id="ActiveShadowIntensity" type="range" is="emby-input" min="0" max="1" step="0.05" />
+                            <input id="ActiveShadowIntensity" type="range" is="emby-input" min="0" max="1" step="0.01" />
                             <div class="fieldDescription">活跃歌词的阴影强度 / Shadow intensity of active lyric</div>
                         </div>
                         
@@ -205,20 +205,20 @@
                     <div class="configSection">
                         <h3>🌈 渐变模糊设置 / Gradient Blur Settings</h3>
                         
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="EnableGradientBlur" type="checkbox" is="emby-checkbox" />
+                                <span>启用渐变模糊 / Enable Gradient Blur</span>
+                            </label>
+                            <div class="fieldDescription">活跃歌词前后渐进式模糊效果 / Progressive blur effect around active lyric</div>
+                        </div>
+                        
                         <div class="inputContainer">
                             <label class="inputLabel" for="GradientBlurAmount">
                                 渐变模糊强度 / Gradient Blur Amount: <span id="GradientBlurAmountValue" class="rangeValue">1.0</span>
                             </label>
                             <input id="GradientBlurAmount" type="range" is="emby-input" min="0" max="10" step="0.1" />
-                            <div class="fieldDescription">活跃歌词前后的渐变模糊强度 / Gradient blur intensity around active lyric</div>
-                        </div>
-                        
-                        <div class="inputContainer">
-                            <label class="inputLabel" for="GradientBlurRange">
-                                渐变影响范围 / Gradient Range (lines): <span id="GradientBlurRangeValue" class="rangeValue">3</span>
-                            </label>
-                            <input id="GradientBlurRange" type="range" is="emby-input" min="1" max="10" step="1" />
-                            <div class="fieldDescription">渐变模糊影响的歌词行数 / Number of lyrics lines affected by gradient blur</div>
+                            <div class="fieldDescription">距离活跃歌词越远模糊越强 / Blur increases with distance from active lyric</div>
                         </div>
                     </div>
 
@@ -248,6 +248,22 @@
                             </label>
                             <input id="TransformDuration" type="range" is="emby-input" min="200" max="2000" step="100" />
                             <div class="fieldDescription">歌词缩放/透明度变换的时长 / Duration for lyric transform/opacity transitions</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ScrollPositionLandscape">
+                                横屏活跃歌词位置 / Landscape Position (%): <span id="ScrollPositionLandscapeValue" class="rangeValue">35</span>
+                            </label>
+                            <input id="ScrollPositionLandscape" type="range" is="emby-input" min="0" max="100" step="1" />
+                            <div class="fieldDescription">桌面/横屏设备活跃歌词在屏幕中的位置 (0=顶部, 100=底部) / Active lyric position on desktop (0=top, 100=bottom)</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ScrollPositionPortrait">
+                                竖屏活跃歌词位置 / Portrait Position (%): <span id="ScrollPositionPortraitValue" class="rangeValue">35</span>
+                            </label>
+                            <input id="ScrollPositionPortrait" type="range" is="emby-input" min="0" max="100" step="1" />
+                            <div class="fieldDescription">移动/竖屏设备活跃歌词在屏幕中的位置 (0=顶部, 100=底部) / Active lyric position on mobile (0=top, 100=bottom)</div>
                         </div>
                     </div>
                     
@@ -283,8 +299,8 @@
                     'BackgroundBlur', 'BackgroundBrightness',
                     'InactiveBrightness', 'InactiveOpacity', 'InactiveShadowIntensity', 'InactiveBlur',
                     'ActiveBrightness', 'ActiveOpacity', 'ActiveGlowIntensity', 'ActiveShadowIntensity', 'ActiveBlur',
-                    'GradientBlurAmount', 'GradientBlurRange',
-                    'ScrollDuration', 'SpringSpeed', 'TransformDuration'
+                    'GradientBlurAmount',
+                    'ScrollDuration', 'SpringSpeed', 'TransformDuration', 'ScrollPositionLandscape', 'ScrollPositionPortrait'
                 ];
 
                 rangeInputs.forEach(function(id) {
@@ -359,23 +375,27 @@
                         updateRangeValue('ActiveBlur', 'ActiveBlurValue', activeBlur);
 
                         // 渐变模糊设置
+                        document.querySelector('#EnableGradientBlur').checked = config.EnableGradientBlur !== false;
                         var gradientBlur = config.GradientBlurAmount !== undefined ? config.GradientBlurAmount : 1.0;
-                        var gradientRange = config.GradientBlurRange !== undefined ? config.GradientBlurRange : 3;
                         document.querySelector('#GradientBlurAmount').value = gradientBlur;
-                        document.querySelector('#GradientBlurRange').value = gradientRange;
                         updateRangeValue('GradientBlurAmount', 'GradientBlurAmountValue', gradientBlur);
-                        updateRangeValue('GradientBlurRange', 'GradientBlurRangeValue', gradientRange);
 
                         // 动画设置
                         var scrollDuration = config.ScrollDuration !== undefined ? config.ScrollDuration : 1000;
                         var springSpeed = config.SpringSpeed !== undefined ? config.SpringSpeed : 1.0;
                         var transformDuration = config.TransformDuration !== undefined ? config.TransformDuration : 800;
+                        var scrollPosLandscape = config.ScrollPositionLandscape !== undefined ? (config.ScrollPositionLandscape * 100) : 35;
+                        var scrollPosPortrait = config.ScrollPositionPortrait !== undefined ? (config.ScrollPositionPortrait * 100) : 35;
                         document.querySelector('#ScrollDuration').value = scrollDuration;
                         document.querySelector('#SpringSpeed').value = springSpeed;
                         document.querySelector('#TransformDuration').value = transformDuration;
+                        document.querySelector('#ScrollPositionLandscape').value = scrollPosLandscape;
+                        document.querySelector('#ScrollPositionPortrait').value = scrollPosPortrait;
                         updateRangeValue('ScrollDuration', 'ScrollDurationValue', scrollDuration);
                         updateRangeValue('SpringSpeed', 'SpringSpeedValue', springSpeed);
                         updateRangeValue('TransformDuration', 'TransformDurationValue', transformDuration);
+                        updateRangeValue('ScrollPositionLandscape', 'ScrollPositionLandscapeValue', scrollPosLandscape);
+                        updateRangeValue('ScrollPositionPortrait', 'ScrollPositionPortraitValue', scrollPosPortrait);
 
                         // 绑定滑块事件
                         bindRangeInputs();
@@ -418,13 +438,15 @@
                         config.ActiveBlur = parseFloat(document.querySelector('#ActiveBlur').value);
 
                         // 渐变模糊设置
+                        config.EnableGradientBlur = document.querySelector('#EnableGradientBlur').checked;
                         config.GradientBlurAmount = parseFloat(document.querySelector('#GradientBlurAmount').value);
-                        config.GradientBlurRange = parseInt(document.querySelector('#GradientBlurRange').value, 10);
 
                         // 动画设置
                         config.ScrollDuration = parseInt(document.querySelector('#ScrollDuration').value, 10);
                         config.SpringSpeed = parseFloat(document.querySelector('#SpringSpeed').value);
                         config.TransformDuration = parseInt(document.querySelector('#TransformDuration').value, 10);
+                        config.ScrollPositionLandscape = parseFloat(document.querySelector('#ScrollPositionLandscape').value) / 100;
+                        config.ScrollPositionPortrait = parseFloat(document.querySelector('#ScrollPositionPortrait').value) / 100;
                         
                         ApiClient.updatePluginConfiguration(AppleLyricsConfig.pluginUniqueId, config).then(function (result) {
                             Dashboard.processPluginConfigurationUpdateResult(result);
@@ -472,13 +494,15 @@
                         config.ActiveBlur = 0.0;
 
                         // 渐变模糊设置
+                        config.EnableGradientBlur = true;
                         config.GradientBlurAmount = 1.0;
-                        config.GradientBlurRange = 3;
 
                         // 动画设置
                         config.ScrollDuration = 1000;
                         config.SpringSpeed = 1.0;
                         config.TransformDuration = 800;
+                        config.ScrollPositionLandscape = 0.35;
+                        config.ScrollPositionPortrait = 0.35;
                         
                         ApiClient.updatePluginConfiguration(AppleLyricsConfig.pluginUniqueId, config).then(function (result) {
                             Dashboard.processPluginConfigurationUpdateResult(result);
