@@ -61,7 +61,7 @@
             if (response.ok) {
                 const config = await response.json();
                 AMLL_CONFIG = { ...AMLL_CONFIG, ...config };
-                console.log('[AMLL] Configuration loaded:', AMLL_CONFIG);
+                debugLog('Configuration loaded:', AMLL_CONFIG);
             } else {
                 console.warn('[AMLL] Failed to load config, using defaults');
             }
@@ -70,7 +70,7 @@
         }
     }
     
-    console.log('[AMLL] Lyrics interceptor loaded');
+    debugLog('Lyrics interceptor loaded');
 
     // 播放管理器引用（从页面事件中获取）
     let playbackManagerRef = null;
@@ -110,10 +110,10 @@
                 const lyricPage = document.querySelector('#lyricPage');
                 if (lyricPage) {
                     clearInterval(checkInterval);
-                    console.log('[AMLL] Lyrics page found after', attempts, 'attempts');
+                    debugLog('Lyrics page found after', attempts, 'attempts');
                     resolve(lyricPage);
                 } else if (attempts % 10 === 0) {
-                    console.log('[AMLL] Still waiting for lyrics page... (' + attempts + ' attempts)');
+                    debugLog('Still waiting for lyrics page... (' + attempts + ' attempts)');
                 }
                 
                 // 30秒超时
@@ -129,7 +129,7 @@
     // 拦截原生歌词渲染
     async function interceptLyricsRendering() {
         interceptionAttempts++;
-        console.log(`[AMLL] Starting interception (attempt #${interceptionAttempts})...`);
+        debugLog(`Starting interception (attempt #${interceptionAttempts})...`);
         
         const lyricPage = await waitForLyricsPage();
         
@@ -153,7 +153,7 @@
 
         // 检测容器是否变化(切换歌曲/重新进入会创建新容器)
         if (lastInterceptedContainer && lastInterceptedContainer !== lyricsContainer) {
-            console.log('[AMLL] Detected new lyrics container (song changed), resetting interception');
+            debugLog('Detected new lyrics container (song changed), resetting interception');
             debugLog('Old container:', lastInterceptedContainer);
             debugLog('New container:', lyricsContainer);
             isIntercepting = false;
@@ -162,15 +162,13 @@
 
         // 防止重复拦截同一个容器
         if (isIntercepting && lastInterceptedContainer === lyricsContainer) {
-            if (interceptionAttempts % 10 === 0) {
-                console.log(`[AMLL] Already intercepting same container, ignoring (#${interceptionAttempts})`);
-            }
+            debugLog(`Already intercepting same container, ignoring (#${interceptionAttempts})`);
             return;
         }
         
         isIntercepting = true;
         lastInterceptedContainer = lyricsContainer;
-        console.log('[AMLL] ✅ Starting interception on new container');
+        debugLog('✅ Starting interception on new container');
         debugLog('Container reference stored:', lyricsContainer);
         debugLog('Container HTML:', lyricsContainer.outerHTML.substring(0, 200));
 
@@ -179,7 +177,7 @@
 
         // 使用 MutationObserver 监听原生歌词加载
         const observer = new MutationObserver((mutations) => {
-            console.log('[AMLL] Mutation detected, checking for lyrics...');
+            debugLog('Mutation detected, checking for lyrics...');
             
             for (const mutation of mutations) {
                 if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
@@ -199,7 +197,7 @@
                     const containerHasLyrics = lyricsContainer.querySelector('.lyricsLine');
                     const isAlreadyAMLL = lyricsContainer.querySelector('.amll-lyrics-container');
                     
-                    console.log('[AMLL] Lyrics check:', {
+                    debugLog('Lyrics check:', {
                         directLyrics: hasDirectLyrics,
                         nestedLyrics: hasNestedLyrics,
                         containerHasLyrics: !!containerHasLyrics,
@@ -208,11 +206,11 @@
 
                     // 只在有原生歌词且还未替换时进行替换
                     if ((hasDirectLyrics || hasNestedLyrics || containerHasLyrics) && !isAlreadyAMLL) {
-                        console.log('[AMLL] Original lyrics detected, replacing with AMLL...');
+                        debugLog('Original lyrics detected, replacing with AMLL...');
                         // 停止轮询
                         if (pollInterval) {
                             clearInterval(pollInterval);
-                            console.log('[AMLL] Polling stopped by MutationObserver');
+                            debugLog('Polling stopped by MutationObserver');
                         }
                         // 停止观察
                         observer.disconnect();
@@ -230,19 +228,19 @@
             subtree: true
         });
 
-        console.log('[AMLL] MutationObserver set up, waiting for lyrics to load...');
+        debugLog('MutationObserver set up, waiting for lyrics to load...');
 
         // 如果已经有歌词,立即替换
         const existingLyrics = lyricsContainer.querySelector('.lyricsLine');
         const alreadyAMLL = lyricsContainer.querySelector('.amll-lyrics-container');
         
         if (existingLyrics && !alreadyAMLL) {
-            console.log('[AMLL] Lyrics already present, replacing immediately...');
+            debugLog('Lyrics already present, replacing immediately...');
             observer.disconnect();
             replaceLyricsWithAMLL(lyricsContainer);
             return; // 立即返回,不再继续轮询
         } else if (alreadyAMLL) {
-            console.log('[AMLL] AMLL lyrics already rendered, extracting lyrics data and restarting sync...');
+            debugLog('AMLL lyrics already rendered, extracting lyrics data and restarting sync...');
             observer.disconnect();
             // 从已渲染的 AMLL 歌词中提取数据
             const lyricsLines = lyricsContainer.querySelectorAll('.amll-lyric-line');
@@ -251,7 +249,7 @@
                     Text: line.textContent,
                     Start: parseInt(line.getAttribute('data-time') || '0') // 使用 data-time 而不是 data-start
                 }));
-                console.log('[AMLL] Extracted', lyricsData.length, 'lyrics lines from existing AMLL container');
+                debugLog('Extracted', lyricsData.length, 'lyrics lines from existing AMLL container');
                 // 重新启动同步(处理退出后再进入的情况)
                 const scrollContainer = lyricsContainer.querySelector('.amll-scroll-container');
                 if (scrollContainer) {
@@ -361,7 +359,7 @@
 
             // 获取专辑封面
             const albumArt = getCurrentAlbumArt();
-            console.log('[AMLL] Album art URL:', albumArt);
+            debugLog('Album art URL:', albumArt);
 
             // 清空容器
             container.innerHTML = '';
@@ -461,18 +459,13 @@
                     seekToTime(lyric.Start);
                 });
                 
+                // 只设置布局相关的内联样式，字体大小、颜色等由 CSS 类控制
                 lyricLine.style.cssText = `
-                    font-size: 32px;
-                    color: rgba(255, 255, 255, 0.4);
                     text-align: center;
-                    text-shadow: 0 1px 6px rgba(0,0,0,0.5);
                     padding: 15px 20px;
                     margin: 8px 0;
-                    font-weight: 300;
                     letter-spacing: 0.5px;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     line-height: 1.5;
-                    cursor: pointer;
                 `;
                 scrollContainer.appendChild(lyricLine);
             });
@@ -493,7 +486,7 @@
             // 开始同步
             startLyricsSync(scrollContainer, lyricsData);
 
-            console.log('[AMLL] ✅ Rendering complete - AMLL style applied');
+            debugLog('✅ Rendering complete - AMLL style applied');
             debugLog('Lyrics count:', lyricsData.length);
             debugLog('Container:', container);
         } catch (error) {
@@ -503,7 +496,11 @@
 
     // 添加全局样式
     function addAMLLStyles() {
-        if (document.getElementById('amll-styles')) return;
+        // 移除旧样式以便重新生成（配置可能已更新）
+        const oldStyle = document.getElementById('amll-styles');
+        if (oldStyle) {
+            oldStyle.remove();
+        }
 
         const cfg = AMLL_CONFIG;
         const isMobile = isMobileDevice();
@@ -528,7 +525,9 @@
                 cursor: pointer;
                 backface-visibility: hidden;
                 will-change: transform, filter, opacity;
-                font-size: ${baseFontSize}px;
+                font-size: ${baseFontSize}px !important;
+                font-weight: 300;
+                color: rgba(255, 255, 255, 0.4);
                 /* 添加自动换行支持，防止长歌词造成布局跳动 */
                 word-wrap: break-word;
                 word-break: break-word;
@@ -547,7 +546,7 @@
             .amll-lyric-line.active {
                 color: rgba(255, 255, 255, ${cfg.ActiveOpacity}) !important;
                 font-weight: 600 !important;
-                font-size: ${activeFontSize}px;
+                font-size: ${activeFontSize}px !important;
                 transform: scale(1.08);
                 text-shadow: 
                     0 0 20px rgba(255, 255, 255, ${cfg.ActiveGlowIntensity}),
@@ -563,29 +562,30 @@
             }
 
             /* 渐变模糊效果 - 活跃歌词前后的歌词，距离越远模糊越强 */
-            .amll-lyric-line.gradient-blur-1 {
-                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 0.3}px) brightness(${cfg.InactiveBrightness * 0.96});
-                opacity: ${cfg.InactiveOpacity * 0.9};
+            /* 注意：仅覆盖 filter 和 opacity，保持其他样式不变 */
+            .amll-lyric-line.gradient-blur-1:not(.active) {
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 0.3}px) brightness(${cfg.InactiveBrightness * 0.96}) !important;
+                opacity: ${cfg.InactiveOpacity * 0.9} !important;
             }
-            .amll-lyric-line.gradient-blur-2 {
-                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 0.6}px) brightness(${cfg.InactiveBrightness * 0.92});
-                opacity: ${cfg.InactiveOpacity * 0.8};
+            .amll-lyric-line.gradient-blur-2:not(.active) {
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 0.6}px) brightness(${cfg.InactiveBrightness * 0.92}) !important;
+                opacity: ${cfg.InactiveOpacity * 0.8} !important;
             }
-            .amll-lyric-line.gradient-blur-3 {
-                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 1.0}px) brightness(${cfg.InactiveBrightness * 0.88});
-                opacity: ${cfg.InactiveOpacity * 0.7};
+            .amll-lyric-line.gradient-blur-3:not(.active) {
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 1.0}px) brightness(${cfg.InactiveBrightness * 0.88}) !important;
+                opacity: ${cfg.InactiveOpacity * 0.7} !important;
             }
-            .amll-lyric-line.gradient-blur-4 {
-                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 1.5}px) brightness(${cfg.InactiveBrightness * 0.84});
-                opacity: ${cfg.InactiveOpacity * 0.6};
+            .amll-lyric-line.gradient-blur-4:not(.active) {
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 1.5}px) brightness(${cfg.InactiveBrightness * 0.84}) !important;
+                opacity: ${cfg.InactiveOpacity * 0.6} !important;
             }
-            .amll-lyric-line.gradient-blur-5 {
-                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 2.0}px) brightness(${cfg.InactiveBrightness * 0.80});
-                opacity: ${cfg.InactiveOpacity * 0.55};
+            .amll-lyric-line.gradient-blur-5:not(.active) {
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 2.0}px) brightness(${cfg.InactiveBrightness * 0.80}) !important;
+                opacity: ${cfg.InactiveOpacity * 0.55} !important;
             }
-            .amll-lyric-line.gradient-blur-far {
-                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 2.5}px) brightness(${cfg.InactiveBrightness * 0.76});
-                opacity: ${cfg.InactiveOpacity * 0.5};
+            .amll-lyric-line.gradient-blur-far:not(.active) {
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 2.5}px) brightness(${cfg.InactiveBrightness * 0.76}) !important;
+                opacity: ${cfg.InactiveOpacity * 0.5} !important;
             }
 
             /* Hover 效果 - Apple Music 风格 */
@@ -600,8 +600,8 @@
                 transform: scale(1.1);
             }
 
-            /* Active 按下效果 */
-            .amll-lyric-line:active {
+            /* 点击按下效果 - 避免与 .active 类冲突 */
+            .amll-lyric-line:not(.active):active {
                 background-color: rgba(255, 255, 255, 0.05);
                 transform: scale(0.98);
             }
@@ -653,13 +653,13 @@
         // 清理旧的同步定时器
         if (currentSyncInterval) {
             clearInterval(currentSyncInterval);
-            console.log('[AMLL] Cleared previous sync interval');
+            debugLog('Cleared previous sync interval');
         }
         
         // 清理旧的hash监听器
         if (currentHashChangeHandler) {
             window.removeEventListener('hashchange', currentHashChangeHandler);
-            console.log('[AMLL] Removed previous hash change handler');
+            debugLog('Removed previous hash change handler');
         }
 
         let currentIndex = -1;
@@ -673,7 +673,7 @@
                 // 每5秒输出一次调试信息
                 debugCounter++;
                 if (debugCounter % 50 === 0) {
-                    console.log('[AMLL] Sync check: currentTime =', currentTime, 'ticks (', (currentTime / 10000).toFixed(2), 's), currentIndex =', currentIndex);
+                    debugLog('Sync check: currentTime =', currentTime, 'ticks (', (currentTime / 10000).toFixed(2), 's), currentIndex =', currentIndex);
                 }
                 
                 if (currentTime === null) return;
@@ -690,7 +690,7 @@
                 // 更新高亮
                 if (newIndex !== currentIndex && newIndex >= 0) {
                     currentIndex = newIndex;
-                    console.log('[AMLL] Switching to lyric line', newIndex, ':', lyrics[newIndex].Text);
+                    debugLog('Switching to lyric line', newIndex, ':', lyrics[newIndex].Text);
                     updateActiveLyric(container, currentIndex);
                 }
             } catch (error) {
@@ -707,7 +707,7 @@
                 if (currentSyncInterval) {
                     clearInterval(currentSyncInterval);
                     currentSyncInterval = null;
-                    console.log('[AMLL] Sync stopped');
+                    debugLog('Sync stopped');
                 }
                 // 移除背景
                 const bg = document.querySelector('.amll-background');
@@ -716,7 +716,7 @@
         };
         window.addEventListener('hashchange', currentHashChangeHandler);
 
-        console.log('[AMLL] Lyrics sync started');
+        debugLog('Lyrics sync started');
     }
 
     // 平滑滚动函数 - 使用 cubic-bezier 缓动
@@ -725,10 +725,14 @@
         const startScrollTop = element.scrollTop;
         const distance = targetScrollTop - startScrollTop;
         const startTime = performance.now();
+        const springSpeed = AMLL_CONFIG.SpringSpeed || 1.0;
         
-        // 更柔和的缓动函数: cubic-bezier(0.25, 0.46, 0.45, 0.94)
+        // 更柔和的缓动函数: cubic-bezier，受 SpringSpeed 影响
         function easeOutCubic(t) {
-            return 1 - Math.pow(1 - t, 3);
+            // SpringSpeed 影响缓动曲线的锐度
+            // >1.0 = 更快更锐利, <1.0 = 更慢更柔和
+            const power = 3 / springSpeed;
+            return 1 - Math.pow(1 - t, power);
         }
         
         function animation(currentTime) {
@@ -802,7 +806,7 @@
                 const targetPosition = containerRect.height * scrollPosition;
                 const scrollTo = lineTopRelative - targetPosition + (lineRect.height / 2);
                 
-                console.log('[AMLL] Scroll:', {
+                debugLog('Scroll:', {
                     lineTop: lineTopRelative,
                     scrollTo: scrollTo,
                     targetPosition: targetPosition,
@@ -819,7 +823,7 @@
     // 跳转到指定时间
     function seekToTime(ticks) {
         try {
-            console.log('[AMLL] Seeking to time:', ticks, 'ticks (', (ticks / 10000000).toFixed(2), 's)');
+            debugLog('Seeking to time:', ticks, 'ticks (', (ticks / 10000000).toFixed(2), 's)');
             
             // 方法1: 使用 playbackManager
             if (!playbackManagerRef) {
@@ -829,7 +833,7 @@
             if (playbackManagerRef && typeof playbackManagerRef.seek === 'function') {
                 const positionTicks = ticks;
                 playbackManagerRef.seek(positionTicks);
-                console.log('[AMLL] Seeked via playbackManager');
+                debugLog('Seeked via playbackManager');
                 return;
             }
             
@@ -838,7 +842,7 @@
             if (mediaElement) {
                 const seconds = ticks / 10000000;
                 mediaElement.currentTime = seconds;
-                console.log('[AMLL] Seeked via media element to', seconds, 's');
+                debugLog('Seeked via media element to', seconds, 's');
                 return;
             }
             
@@ -1035,7 +1039,7 @@
         const checkInterval = setInterval(() => {
             if (checkForLyricsPage()) {
                 // 找到后可以停止定期检查，MutationObserver 会继续工作
-                console.log('[AMLL] Periodic check found lyrics page');
+                debugLog('Periodic check found lyrics page');
             }
         }, 1000);
         
