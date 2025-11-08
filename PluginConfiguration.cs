@@ -61,7 +61,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// 非活跃歌词阴影强度 / Inactive Lyric Shadow Intensity (0.0-1.0)
     /// </summary>
-    public double InactiveShadowIntensity { get; set; } = 0.5;
+    public double InactiveShadowIntensity { get; set; } = 0.0;
 
     /// <summary>
     /// 非活跃歌词模糊程度 / Inactive Lyric Blur Amount (px, 0-10)
@@ -78,17 +78,17 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// 活跃歌词透明度 / Active Lyric Opacity (0.0-1.0)
     /// </summary>
-    public double ActiveOpacity { get; set; } = 1.0;
+    public double ActiveOpacity { get; set; } = 0.9;
 
     /// <summary>
     /// 活跃歌词发光强度 / Active Lyric Glow Intensity (0.0-1.0)
     /// </summary>
-    public double ActiveGlowIntensity { get; set; } = 0.2;
+    public double ActiveGlowIntensity { get; set; } = 0.35;
 
     /// <summary>
     /// 活跃歌词阴影强度 / Active Lyric Shadow Intensity (0.0-1.0)
     /// </summary>
-    public double ActiveShadowIntensity { get; set; } = 0.15;
+    public double ActiveShadowIntensity { get; set; } = 0.0;
 
     /// <summary>
     /// 活跃歌词模糊程度 / Active Lyric Blur Amount (px, 0-10)
@@ -122,12 +122,12 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// Transform过渡时长 / Transform Transition Duration (ms)
     /// </summary>
-    public int TransformDuration { get; set; } = 800;
+    public int TransformDuration { get; set; } = 300;
 
     /// <summary>
     /// 横屏活跃歌词位置(屏幕百分比) / Landscape Active Lyric Position (0.0-1.0, 0=top, 1=bottom)
     /// </summary>
-    public double ScrollPositionLandscape { get; set; } = 0.35;
+    public double ScrollPositionLandscape { get; set; } = 0.30;
 
     /// <summary>
     /// 竖屏活跃歌词位置(屏幕百分比) / Portrait Active Lyric Position (0.0-1.0, 0=top, 1=bottom)
