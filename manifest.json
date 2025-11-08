@@ -1,0 +1,21 @@
+[
+  {
+    "guid": "c9d90e6d-7b5b-4f5a-8c3e-2d4f6a8b9c1d",
+    "name": "Apple Music Like Lyrics",
+    "description": "Brings Apple Music-style lyrics display experience to Jellyfin web client with smooth animations, gradient blur effects, and highly customizable appearance.",
+    "overview": "Transform your Jellyfin music experience with beautiful Apple Music-style lyrics. Features include responsive font sizing, gradient blur effects around active lyrics, customizable colors and transparency, smooth spring animations, and click-to-seek functionality.",
+    "owner": "SnowSwordScholar",
+    "category": "Music",
+    "imageUrl": "https://raw.githubusercontent.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/main/icon.png",
+    "versions": [
+      {
+        "version": "1.0.0.0",
+        "changelog": "Initial release\n- Apple Music-style lyrics rendering\n- Gradient blur effects\n- Responsive font sizing for landscape/portrait\n- Customizable colors, transparency, and blur\n- Spring animation with adjustable speed\n- Background blur based on album art\n- Click-to-seek lyrics\n- Debug mode for troubleshooting",
+        "targetAbi": "10.10.0.0",
+        "sourceUrl": "https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/releases/download/v1.0.0/JellyfinAppleLyrics.dll.zip",
+        "checksum": "6f036e352ee48b3c2db27b7de669c184",
+        "timestamp": "2025-11-08T00:00:00Z"
+      }
+    ]
+  }
+]

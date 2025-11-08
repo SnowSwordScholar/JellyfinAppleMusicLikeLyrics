@@ -44,3 +44,18 @@ yarn.lock
 ## Build output
 dist/
 build/
+
+## Release files (keep ZIP for release)
+# JellyfinAppleLyrics.dll.zip
+
+## Backup files
+*.old
+*.bak
+*~
+
+## Testing
+test-results/
+coverage/
+
+## Release artifacts
+releases/
