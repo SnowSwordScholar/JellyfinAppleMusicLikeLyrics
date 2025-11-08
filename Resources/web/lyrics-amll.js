@@ -466,6 +466,12 @@
             #lyricPage .padded-bottom-page {
                 padding: 0 !important;
             }
+
+            /* 隐藏原生 Jellyfin 歌词，防止切换时闪现 */
+            .lyricsContainer > .lyricsLine {
+                opacity: 0 !important;
+                transition: none !important;
+            }
         `;
         document.head.appendChild(style);
     }
