@@ -132,7 +132,7 @@ Restart-Service JellyfinServer
 <body>
     <div id="apphost"></div>
     <!-- ... 其他脚本 ... -->
-    <script plugin="Apple Music Lyrics" src="../applelyrics/init.js" defer></script>
+    <script plugin="Apple Music Lyrics" version="1.0.0" src="../applelyrics/init.js" defer></script>
 </body>
 </html>
 ```

@@ -57,7 +57,7 @@
                     ApiClient.getPluginConfiguration(AppleLyricsConfig.pluginUniqueId).then(function (config) {
                         document.querySelector('#IsEnabled').checked = config.IsEnabled !== false;
                         document.querySelector('#EnableBackgroundBlur').checked = config.EnableBackgroundBlur !== false;
-                        document.querySelector('#BlurAmount').value = config.BlurAmount || 30;
+                        document.querySelector('#BlurAmount').value = config.BlurAmount !== undefined && config.BlurAmount !== null ? config.BlurAmount : 30;
                         document.querySelector('#FontSize').value = config.FontSize || 32;
                         Dashboard.hideLoadingMsg();
                     });
