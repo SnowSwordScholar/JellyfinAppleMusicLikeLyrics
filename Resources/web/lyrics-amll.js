@@ -8,7 +8,7 @@
 
     // ========== 调试模式配置 ==========
     // 设置为 true 开启详细调试日志，false 为生产模式
-    const DEBUG_MODE = true;
+    const DEBUG_MODE = false;
     
     // 调试日志函数
     const debugLog = (...args) => {
@@ -444,21 +444,64 @@
         const style = document.createElement('style');
         style.id = 'amll-styles';
         style.textContent = `
+            /* 隐藏滚动条 */
             .amll-scroll-container::-webkit-scrollbar {
                 display: none;
             }
 
+            /* 歌词行基础样式 */
+            .amll-lyric-line {
+                position: relative;
+                padding: 0.75em 1.5em;
+                margin: 0.5em 0;
+                border-radius: 0.5em;
+                cursor: pointer;
+                backface-visibility: hidden;
+                will-change: transform, filter, opacity;
+                transition: 
+                    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                    filter 0.3s ease,
+                    opacity 0.3s ease,
+                    background-color 0.25s ease,
+                    box-shadow 0.25s ease;
+            }
+
+            /* 活动歌词行 - Apple Music 风格 */
             .amll-lyric-line.active {
                 color: rgba(255, 255, 255, 1) !important;
-                font-weight: 500 !important;
-                transform: scale(1.05);
-                text-shadow: 0 0 20px rgba(255,255,255,0.3);
+                font-weight: 600 !important;
+                transform: scale(1.08);
+                text-shadow: 
+                    0 0 30px rgba(255, 255, 255, 0.4),
+                    0 2px 8px rgba(0, 0, 0, 0.3);
+                filter: blur(0px) brightness(1.2);
             }
 
+            /* 非活动歌词行 - 模糊效果 */
+            .amll-lyric-line:not(.active) {
+                filter: blur(0.5px) brightness(0.7);
+                opacity: 0.5;
+            }
+
+            /* Hover 效果 - Apple Music 风格 */
             .amll-lyric-line:hover {
-                color: rgba(255, 255, 255, 0.7);
+                background-color: rgba(255, 255, 255, 0.08);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+                transform: scale(1.02);
             }
 
+            .amll-lyric-line.active:hover {
+                background-color: rgba(255, 255, 255, 0.12);
+                transform: scale(1.1);
+            }
+
+            /* Active 按下效果 */
+            .amll-lyric-line:active {
+                background-color: rgba(255, 255, 255, 0.05);
+                transform: scale(0.98);
+            }
+
+            /* 歌词页面背景 */
             #lyricPage {
                 background: transparent !important;
             }
@@ -472,6 +515,30 @@
                 opacity: 0 !important;
                 transition: none !important;
             }
+
+            /* 淡入动画 - 新歌词加载时 */
+            @keyframes amll-fade-in {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .amll-lyric-line {
+                animation: amll-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+            }
+
+            /* 为不同行设置延迟，创建级联效果 */
+            .amll-lyric-line:nth-child(1) { animation-delay: 0.00s; }
+            .amll-lyric-line:nth-child(2) { animation-delay: 0.03s; }
+            .amll-lyric-line:nth-child(3) { animation-delay: 0.06s; }
+            .amll-lyric-line:nth-child(4) { animation-delay: 0.09s; }
+            .amll-lyric-line:nth-child(5) { animation-delay: 0.12s; }
+            .amll-lyric-line:nth-child(n+6) { animation-delay: 0.15s; }
         `;
         document.head.appendChild(style);
     }
@@ -547,6 +614,32 @@
         console.log('[AMLL] Lyrics sync started');
     }
 
+    // 平滑滚动函数 - 使用 cubic-bezier 缓动
+    function smoothScrollTo(element, targetScrollTop, duration = 600) {
+        const startScrollTop = element.scrollTop;
+        const distance = targetScrollTop - startScrollTop;
+        const startTime = performance.now();
+        
+        // Apple Music 风格的缓动函数: cubic-bezier(0.16, 1, 0.3, 1)
+        function easeOutExpo(t) {
+            return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+        }
+        
+        function animation(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easeProgress = easeOutExpo(progress);
+            
+            element.scrollTop = startScrollTop + (distance * easeProgress);
+            
+            if (progress < 1) {
+                requestAnimationFrame(animation);
+            }
+        }
+        
+        requestAnimationFrame(animation);
+    }
+
     // 更新活跃歌词
     function updateActiveLyric(scrollContainer, index) {
         // 移除所有高亮
@@ -589,10 +682,8 @@
                     currentScrollTop: scrollContainer.scrollTop
                 });
                 
-                scrollContainer.scrollTo({
-                    top: Math.max(0, scrollTo),
-                    behavior: 'smooth'
-                });
+                // 使用更平滑的自定义滚动动画
+                smoothScrollTo(scrollContainer, Math.max(0, scrollTo), 600);
             });
         }
     }
