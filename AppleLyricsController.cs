@@ -46,7 +46,7 @@ public class AppleLyricsController : ControllerBase
     }
 
     /// <summary>
-    /// 获取初始化脚本
+    /// 获取初始化脚本 (旧版，保留兼容)
     /// </summary>
     [HttpGet("init.js")]
     public ActionResult GetInitJs()
@@ -55,6 +55,20 @@ public class AppleLyricsController : ControllerBase
         if (content == null)
         {
             return NotFound("init.js not found");
+        }
+        return Content(content, "application/javascript; charset=utf-8");
+    }
+
+    /// <summary>
+    /// 获取AMLL歌词拦截脚本（新版）
+    /// </summary>
+    [HttpGet("lyrics-amll.js")]
+    public ActionResult GetLyricsAmllJs()
+    {
+        var content = GetEmbeddedResourceContent("lyrics-amll.js");
+        if (content == null)
+        {
+            return NotFound("lyrics-amll.js not found");
         }
         return Content(content, "application/javascript; charset=utf-8");
     }

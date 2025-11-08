@@ -68,8 +68,16 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         
         Instance = this;
         
-        // 清理旧版本的脚本
-        _scriptInjector.CleanupOldScript();
+        // 检查并注入脚本（如果尚未注入）
+        if (!_scriptInjector.IsScriptInjected())
+        {
+            _logger.LogInformation("Script not found in index.html, injecting now...");
+            _scriptInjector.InjectScript();
+        }
+        else
+        {
+            _logger.LogInformation("Script already injected in index.html");
+        }
     }
 
     /// <summary>

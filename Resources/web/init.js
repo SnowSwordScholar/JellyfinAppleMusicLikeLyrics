@@ -101,6 +101,44 @@ console.log('[AppleMusic] Init script loaded');
         }
     }
 
+    // 强制隐藏原始歌词
+    function hideOriginalLyrics(pageElement) {
+        // 使用多种方式隐藏原始歌词
+        const originalLyricsContainer = pageElement.querySelector('.lyricsContainer');
+        if (originalLyricsContainer) {
+            console.log('[AppleMusic] Hiding original lyrics container');
+            originalLyricsContainer.style.cssText = `
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+                position: absolute !important;
+                left: -9999px !important;
+            `;
+        }
+        
+        // 隐藏所有歌词行
+        const lyricsLines = pageElement.querySelectorAll('.lyricsLine');
+        lyricsLines.forEach(line => {
+            line.style.cssText = 'display: none !important;';
+        });
+        
+        // 添加全局样式来确保隐藏
+        if (!document.getElementById('appleMusicHideStyle')) {
+            const style = document.createElement('style');
+            style.id = 'appleMusicHideStyle';
+            style.textContent = `
+                #lyricPage .lyricsContainer,
+                #lyricPage .lyricsLine {
+                    display: none !important;
+                    opacity: 0 !important;
+                    visibility: hidden !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+
     // 等待Now Playing/Lyrics页面
     function waitForNowPlayingPage() {
         console.log('[AppleMusic] Waiting for Lyrics page...');
@@ -118,28 +156,51 @@ console.log('[AppleMusic] Init script loaded');
             if (hash.includes('/lyrics')) {
                 console.log('[AppleMusic] Lyrics page detected, waiting for DOM...');
                 
+                // 立即尝试隐藏原始歌词（减少闪烁）
+                const quickHide = () => {
+                    const page = document.querySelector('#lyricPage');
+                    if (page) {
+                        hideOriginalLyrics(page);
+                    }
+                };
+                
+                // 立即执行一次
+                quickHide();
+                
                 // 等待 DOM 加载
                 setTimeout(() => {
                     // 查找歌词页面容器 - Jellyfin 使用 #lyricPage
                     const lyricsPage = document.querySelector('#lyricPage');
                     
-                    if (lyricsPage && !setupDone) {
-                        setupDone = true;
-                        console.log('[AppleMusic] Lyrics page DOM found:', lyricsPage);
-                        setupNowPlayingLyrics(lyricsPage);
+                    if (lyricsPage) {
+                        // 再次确保隐藏
+                        hideOriginalLyrics(lyricsPage);
+                        
+                        if (!setupDone) {
+                            setupDone = true;
+                            console.log('[AppleMusic] Lyrics page DOM found:', lyricsPage);
+                            setupNowPlayingLyrics(lyricsPage);
+                        } else {
+                            // 如果已经设置过，只需要重新应用（用户重新进入页面）
+                            console.log('[AppleMusic] Re-entering lyrics page, reapplying setup');
+                            setupNowPlayingLyrics(lyricsPage);
+                        }
                     } else {
                         console.log('[AppleMusic] Lyrics page container not found yet, retrying...');
                         // 重试一次
                         setTimeout(() => {
                             const retryPage = document.querySelector('#lyricPage');
-                            if (retryPage && !setupDone) {
-                                setupDone = true;
+                            if (retryPage) {
+                                hideOriginalLyrics(retryPage);
+                                if (!setupDone) {
+                                    setupDone = true;
+                                }
                                 console.log('[AppleMusic] Lyrics page found on retry');
                                 setupNowPlayingLyrics(retryPage);
                             }
                         }, 1000);
                     }
-                }, 500);
+                }, 200); // 减少延迟以更快隐藏
             }
         };
 
@@ -175,18 +236,34 @@ console.log('[AppleMusic] Init script loaded');
             console.log('[AppleMusic] Setting up Apple Music style on:', pageElement);
 
             // 检查是否已经设置过
-            if (document.getElementById('appleMusicBgContainer')) {
-                console.log('[AppleMusic] Already set up, skipping');
+            const existingBg = document.getElementById('appleMusicBgContainer');
+            const existingLyrics = document.getElementById('appleMusicLyricsContainer');
+            
+            if (existingBg && existingLyrics) {
+                console.log('[AppleMusic] Containers already exist, reusing them');
+                // 重新显示容器
+                existingBg.style.display = 'block';
+                existingLyrics.style.display = 'block';
+                
+                // 重新隐藏原始歌词
+                hideOriginalLyrics(pageElement);
+                
+                // 更新背景和歌词
+                setTimeout(() => {
+                    updateBackgroundFromAlbum(pageElement, existingBg);
+                    // 重新开始监控
+                    if (window.appleMusicCheckInterval) {
+                        clearInterval(window.appleMusicCheckInterval);
+                        window.appleMusicCheckInterval = null;
+                    }
+                    startMonitoring(pageElement, existingLyrics);
+                }, 500);
+                
                 return;
             }
 
             // 隐藏原生歌词容器
-            const originalLyricsContainer = pageElement.querySelector('.lyricsContainer');
-            if (originalLyricsContainer) {
-                console.log('[AppleMusic] Hiding original lyrics container');
-                originalLyricsContainer.style.opacity = '0';
-                originalLyricsContainer.style.pointerEvents = 'none';
-            }
+            hideOriginalLyrics(pageElement);
 
             // 创建背景容器
             const bgContainer = document.createElement('div');
@@ -231,44 +308,8 @@ console.log('[AppleMusic] Init script loaded');
                 updateBackgroundFromAlbum(pageElement, bgContainer);
             }, 800);
 
-            // 先获取初始歌曲标题，然后开始监听
-            setTimeout(() => {
-                // 尝试从多个地方获取歌曲信息（仅在歌词页面内查找）
-                let songTitle = null;
-                
-                // 方法1: 从歌词页面内的元素获取
-                const titleInPage = pageElement.querySelector('.osdTitle, h2, .itemName');
-                if (titleInPage && titleInPage.textContent.trim()) {
-                    const text = titleInPage.textContent.trim();
-                    if (!text.match(/^\d+:\d+$/) && !text.includes('服务')) {
-                        songTitle = text;
-                    }
-                }
-                
-                // 方法2: 从 nowPlayingBar 获取
-                if (!songTitle) {
-                    const nowPlayingText = document.querySelector('.nowPlayingBarText');
-                    if (nowPlayingText && nowPlayingText.textContent.trim()) {
-                        const text = nowPlayingText.textContent.trim();
-                        if (!text.match(/^\d+:\d+$/) && !text.includes('服务')) {
-                            songTitle = text;
-                        }
-                    }
-                }
-                
-                if (songTitle) {
-                    console.log('[AppleMusic] Found initial song title:', songTitle);
-                    updateLyricsDisplay(lyricsContainer, songTitle);
-                } else {
-                    console.log('[AppleMusic] Song title not found, showing placeholder');
-                    updateLyricsDisplay(lyricsContainer, 'Waiting for playback...');
-                }
-                
-                // 在获取初始标题后再开始监听
-                setTimeout(() => {
-                    monitorPlaybackInfo(pageElement, lyricsContainer);
-                }, 500);
-            }, 1000);
+            // 开始监控
+            startMonitoring(pageElement, lyricsContainer);
 
         } catch (error) {
             console.error('[AppleMusic] Error setting up lyrics:', error);
@@ -354,6 +395,47 @@ console.log('[AppleMusic] Init script loaded');
         }
     }
 
+    // 开始监控流程
+    function startMonitoring(pageElement, lyricsContainer) {
+        setTimeout(() => {
+            // 尝试从多个地方获取歌曲信息（仅在歌词页面内查找）
+            let songTitle = null;
+            
+            // 方法1: 从歌词页面内的元素获取
+            const titleInPage = pageElement.querySelector('.osdTitle, h2, .itemName');
+            if (titleInPage && titleInPage.textContent.trim()) {
+                const text = titleInPage.textContent.trim();
+                if (!text.match(/^\d+:\d+$/) && !text.includes('服务')) {
+                    songTitle = text;
+                }
+            }
+            
+            // 方法2: 从 nowPlayingBar 获取
+            if (!songTitle) {
+                const nowPlayingText = document.querySelector('.nowPlayingBarText');
+                if (nowPlayingText && nowPlayingText.textContent.trim()) {
+                    const text = nowPlayingText.textContent.trim();
+                    if (!text.match(/^\d+:\d+$/) && !text.includes('服务')) {
+                        songTitle = text;
+                    }
+                }
+            }
+            
+            if (songTitle) {
+                console.log('[AppleMusic] Found initial song title:', songTitle);
+                updateLyricsDisplay(lyricsContainer, songTitle);
+            } else {
+                console.log('[AppleMusic] Song title not found, showing placeholder');
+                updateLyricsDisplay(lyricsContainer, 'Waiting for playback...');
+            }
+            
+            // 在获取初始标题后再开始监听
+            setTimeout(() => {
+                monitorPlaybackInfo(pageElement, lyricsContainer);
+            }, 500);
+        }, 1000);
+    }
+
     // 监听播放信息变化
     function monitorPlaybackInfo(pageElement, lyricsContainer) {
         let currentSongTitle = '';
@@ -421,6 +503,39 @@ console.log('[AppleMusic] Init script loaded');
         console.log('[AppleMusic] Started monitoring playback info');
     }
 
+    // 从 Jellyfin 原生歌词中提取数据
+    function extractLyricsFromPage() {
+        try {
+            const lyricPage = document.querySelector('#lyricPage');
+            if (!lyricPage) return null;
+
+            // 查找所有歌词行
+            const lyricsLines = lyricPage.querySelectorAll('.lyricsLine');
+            if (!lyricsLines || lyricsLines.length === 0) {
+                console.log('[AppleMusic] No lyrics lines found in page');
+                return null;
+            }
+
+            const lyrics = [];
+            lyricsLines.forEach(line => {
+                const text = line.textContent.trim();
+                const timeAttr = line.getAttribute('data-lyrictime');
+                
+                if (text && timeAttr) {
+                    // data-lyrictime 是以毫秒为单位的时间戳
+                    const time = parseInt(timeAttr, 10) / 1000; // 转换为秒
+                    lyrics.push({ time, text });
+                }
+            });
+
+            console.log(`[AppleMusic] Extracted ${lyrics.length} lyrics lines`);
+            return lyrics.length > 0 ? lyrics : null;
+        } catch (error) {
+            console.warn('[AppleMusic] Error extracting lyrics:', error);
+            return null;
+        }
+    }
+
     // 更新歌词显示
     function updateLyricsDisplay(container, songTitle) {
         try {
@@ -430,32 +545,186 @@ console.log('[AppleMusic] Init script loaded');
 
             console.log('[AppleMusic] Updating lyrics for:', songTitle);
 
-            // 简单显示歌曲标题（临时，稍后可以实现真实的歌词）
-            container.innerHTML = `
-                <div class="appleMusicLyrics" style="
-                    font-size: ${config.fontSize}px;
-                    color: white;
-                    text-align: center;
-                    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-                    padding: 20px;
-                    font-weight: 300;
-                    letter-spacing: 1px;
-                    animation: fadeIn 0.5s ease;
-                ">
-                    <p style="margin: 0; opacity: 0.9;">${songTitle}</p>
-                    <p style="margin-top: 10px; font-size: 0.6em; opacity: 0.6;">♪ Apple Music Style ♪</p>
-                </div>
-            `;
+            // 尝试从页面中提取歌词
+            const lyrics = extractLyricsFromPage();
 
-            // TODO: 从API获取真实歌词
-            // fetchLyrics(songTitle).then((lyrics) => {
-            //     if (lyrics) {
-            //         container.innerHTML = lyrics;
-            //     }
-            // });
+            if (lyrics && lyrics.length > 0) {
+                console.log('[AppleMusic] Found lyrics data, rendering...');
+                renderLyrics(container, lyrics, songTitle);
+                // 开始同步歌词
+                startLyricsSync(container, lyrics);
+            } else {
+                // 没有歌词时显示歌曲名
+                container.innerHTML = `
+                    <div class="appleMusicLyrics" style="
+                        font-size: ${config.fontSize}px;
+                        color: white;
+                        text-align: center;
+                        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+                        padding: 20px;
+                        font-weight: 300;
+                        letter-spacing: 1px;
+                        animation: fadeIn 0.5s ease;
+                    ">
+                        <p style="margin: 0; opacity: 0.9;">${songTitle}</p>
+                        <p style="margin-top: 10px; font-size: 0.6em; opacity: 0.6;">♪ No lyrics available ♪</p>
+                    </div>
+                `;
+            }
 
         } catch (error) {
             console.error('[AppleMusic] Error updating lyrics:', error);
+        }
+    }
+
+    // 渲染歌词
+    function renderLyrics(container, lyrics, songTitle) {
+        const lyricsHTML = lyrics.map((line, index) => `
+            <div class="lyric-line" data-time="${line.time}" data-index="${index}" style="
+                font-size: ${config.fontSize}px;
+                color: rgba(255, 255, 255, 0.4);
+                text-align: center;
+                text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+                padding: 10px 20px;
+                margin: 5px 0;
+                font-weight: 300;
+                letter-spacing: 0.5px;
+                transition: all 0.3s ease;
+                line-height: 1.5;
+            ">
+                ${line.text}
+            </div>
+        `).join('');
+
+        container.innerHTML = `
+            <div class="appleMusicLyricsScroller" style="
+                max-height: 70vh;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding: 20px;
+                scroll-behavior: smooth;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            ">
+                <div style="margin-bottom: 15px; font-size: ${config.fontSize * 0.7}px; color: rgba(255,255,255,0.6); text-align: center;">
+                    ${songTitle}
+                </div>
+                ${lyricsHTML}
+                <div style="height: 40vh;"></div>
+            </div>
+            <style>
+                .appleMusicLyricsScroller::-webkit-scrollbar {
+                    display: none;
+                }
+                .lyric-line.active {
+                    color: rgba(255, 255, 255, 1) !important;
+                    font-weight: 500 !important;
+                    transform: scale(1.1);
+                }
+            </style>
+        `;
+    }
+
+    // 同步歌词滚动
+    function startLyricsSync(container, lyrics) {
+        // 清除之前的同步定时器
+        if (window.appleMusicLyricsSyncInterval) {
+            clearInterval(window.appleMusicLyricsSyncInterval);
+        }
+
+        let currentIndex = -1;
+
+        const syncInterval = setInterval(() => {
+            try {
+                // 获取当前播放时间
+                const currentTime = getCurrentPlaybackTime();
+                if (currentTime === null) return;
+
+                // 找到当前应该显示的歌词
+                let newIndex = -1;
+                for (let i = lyrics.length - 1; i >= 0; i--) {
+                    if (currentTime >= lyrics[i].time) {
+                        newIndex = i;
+                        break;
+                    }
+                }
+
+                // 如果索引变化，更新高亮
+                if (newIndex !== currentIndex && newIndex >= 0) {
+                    currentIndex = newIndex;
+                    updateActiveLyric(container, currentIndex);
+                }
+            } catch (error) {
+                console.warn('[AppleMusic] Error syncing lyrics:', error);
+            }
+        }, 100); // 每100ms检查一次
+
+        window.appleMusicLyricsSyncInterval = syncInterval;
+        console.log('[AppleMusic] Started lyrics sync');
+    }
+
+    // 更新当前活跃的歌词行
+    function updateActiveLyric(container, index) {
+        try {
+            // 移除之前的高亮
+            const allLines = container.querySelectorAll('.lyric-line');
+            allLines.forEach(line => line.classList.remove('active'));
+
+            // 高亮当前行
+            const currentLine = container.querySelector(`.lyric-line[data-index="${index}"]`);
+            if (currentLine) {
+                currentLine.classList.add('active');
+
+                // 滚动到当前行（居中显示）
+                const scroller = container.querySelector('.appleMusicLyricsScroller');
+                if (scroller) {
+                    const lineTop = currentLine.offsetTop;
+                    const scrollerHeight = scroller.clientHeight;
+                    const lineHeight = currentLine.clientHeight;
+                    const scrollTo = lineTop - (scrollerHeight / 2) + (lineHeight / 2);
+                    
+                    scroller.scrollTo({
+                        top: scrollTo,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        } catch (error) {
+            console.warn('[AppleMusic] Error updating active lyric:', error);
+        }
+    }
+
+    // 获取当前播放时间
+    function getCurrentPlaybackTime() {
+        try {
+            // 方法1: 从 HTML5 audio/video 元素获取
+            const mediaElement = document.querySelector('audio, video');
+            if (mediaElement && !isNaN(mediaElement.currentTime)) {
+                return mediaElement.currentTime;
+            }
+
+            // 方法2: 从 Jellyfin 的播放器 API 获取（如果有）
+            if (window.playerManager && window.playerManager.currentTime) {
+                return window.playerManager.currentTime() / 10000000; // Jellyfin 使用 ticks
+            }
+
+            // 方法3: 从 OSD 时间显示中解析
+            const timeDisplay = document.querySelector('.osdTimeText, .positionTime');
+            if (timeDisplay) {
+                const timeText = timeDisplay.textContent.trim();
+                const match = timeText.match(/(\d+):(\d+)/);
+                if (match) {
+                    const minutes = parseInt(match[1], 10);
+                    const seconds = parseInt(match[2], 10);
+                    return minutes * 60 + seconds;
+                }
+            }
+
+            return null;
+        } catch (error) {
+            console.warn('[AppleMusic] Error getting playback time:', error);
+            return null;
         }
     }
 
@@ -480,12 +749,22 @@ console.log('[AppleMusic] Init script loaded');
             clearInterval(window.appleMusicCheckInterval);
             window.appleMusicCheckInterval = null;
         }
+        
+        // 清理歌词同步定时器
+        if (window.appleMusicLyricsSyncInterval) {
+            clearInterval(window.appleMusicLyricsSyncInterval);
+            window.appleMusicLyricsSyncInterval = null;
+        }
 
-        // 移除容器
+        // 隐藏容器而不是移除（以便重用）
         const bgContainer = document.getElementById('appleMusicBgContainer');
         const lyricsContainer = document.getElementById('appleMusicLyricsContainer');
-        if (bgContainer) bgContainer.remove();
-        if (lyricsContainer) lyricsContainer.remove();
+        if (bgContainer) bgContainer.style.display = 'none';
+        if (lyricsContainer) lyricsContainer.style.display = 'none';
+        
+        // 移除隐藏样式
+        const hideStyle = document.getElementById('appleMusicHideStyle');
+        if (hideStyle) hideStyle.remove();
     }
 
     // 监听页面卸载

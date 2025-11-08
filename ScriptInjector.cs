@@ -44,33 +44,26 @@ public class ScriptInjector
     }
 
     /// <summary>
-    /// 清理旧版本的脚本标签
+    /// 检查脚本是否已注入
     /// </summary>
-    public void CleanupOldScript()
+    public bool IsScriptInjected()
     {
         try
         {
             var indexPath = IndexHtmlPath;
             if (!File.Exists(indexPath))
             {
-                _logger.LogError("Could not find index.html at path: {Path}", indexPath);
-                return;
+                return false;
             }
 
             var content = File.ReadAllText(indexPath);
-            var regex = new Regex($"<script[^>]*plugin=[\"']{PluginName}[\"'][^>]*>\\s*</script>\\n?");
-
-            if (regex.IsMatch(content))
-            {
-                _logger.LogInformation("Found old {PluginName} script tag in index.html. Removing it now.", PluginName);
-                content = regex.Replace(content, string.Empty);
-                File.WriteAllText(indexPath, content);
-                _logger.LogInformation("Successfully removed old script tag.");
-            }
+            var regex = new Regex($"<script[^>]*plugin=[\"']{PluginName}[\"'][^>]*src=[\"']../applelyrics/init.js[\"'][^>]*>");
+            return regex.IsMatch(content);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during cleanup of old script from index.html");
+            _logger.LogError(ex, "Error checking if script is injected");
+            return false;
         }
     }
 
@@ -90,7 +83,8 @@ public class ScriptInjector
             }
 
             var content = File.ReadAllText(indexPath);
-            var scriptUrl = "../applelyrics/init.js";
+            // 使用新的 lyrics-amll.js 脚本
+            var scriptUrl = "../applelyrics/lyrics-amll.js";
             var scriptTag = $"<script plugin=\"{PluginName}\" version=\"{Plugin.Instance?.Version}\" src=\"{scriptUrl}\" defer></script>";
             var regex = new Regex($"<script[^>]*plugin=[\"']{PluginName}[\"'][^>]*>\\s*</script>\\n?");
 
@@ -103,7 +97,7 @@ public class ScriptInjector
                 if (content.Contains(closingBodyTag))
                 {
                     content = content.Replace(closingBodyTag, $"{scriptTag}\n{closingBodyTag}");
-                    _logger.LogInformation("Successfully injected/updated the {PluginName} script.", PluginName);
+                    _logger.LogInformation("Successfully injected/updated the {PluginName} script (lyrics-amll.js).", PluginName);
                 }
                 else
                 {
