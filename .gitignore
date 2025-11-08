@@ -45,8 +45,10 @@ yarn.lock
 dist/
 build/
 
-## Release files (keep ZIP for release)
-# JellyfinAppleLyrics.dll.zip
+## Release artifacts
+# Release files should be on GitHub Releases, not in the repository
+# The release.sh script will create releases/ directory and upload to GitHub
+releases/
 
 ## Backup files
 *.old
@@ -56,6 +58,3 @@ build/
 ## Testing
 test-results/
 coverage/
-
-## Release artifacts
-releases/

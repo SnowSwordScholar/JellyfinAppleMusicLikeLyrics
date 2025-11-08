@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送 v* 标签时触发
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+      
+    - name: Create package
+      run: |
+        mkdir -p releases
+        cd bin/Release/net8.0
+        zip -j ../../../releases/JellyfinAppleLyrics.dll.zip JellyfinAppleLyrics.dll
+        cd ../../..
+        
+    - name: Calculate checksum
+      id: checksum
+      run: |
+        CHECKSUM=$(md5sum releases/JellyfinAppleLyrics.dll.zip | awk '{print $1}')
+        echo "checksum=$CHECKSUM" >> $GITHUB_OUTPUT
+        echo "MD5 Checksum: $CHECKSUM"
+        
+    - name: Get version
+      id: version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: releases/JellyfinAppleLyrics.dll.zip
+        body: |
+          ## Release ${{ steps.version.outputs.version }}
+          
+          ### 📦 Installation
+          
+          1. Download `JellyfinAppleLyrics.dll.zip`
+          2. Extract to your Jellyfin plugins folder
+          3. Restart Jellyfin
+          
+          ### 🔐 Checksum
+          
+          MD5: `${{ steps.checksum.outputs.checksum }}`
+          
+          ### 📝 Full Changelog
+          
+          See [CHANGELOG.md](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/blob/main/CHANGELOG.md)
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Update manifest
+      run: |
+        VERSION=${{ steps.version.outputs.version }}
+        CHECKSUM=${{ steps.checksum.outputs.checksum }}
+        TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        
+        # 这里可以添加更新 manifest.json 并推送的逻辑
+        # 注意：需要配置 PAT (Personal Access Token) 才能推送回 main 分支
