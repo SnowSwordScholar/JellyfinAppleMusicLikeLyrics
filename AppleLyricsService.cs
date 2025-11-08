@@ -75,10 +75,11 @@ public class AppleLyricsService : IHostedService, IDisposable
         var config = Plugin.Instance.Configuration;
         _logger.LogInformation($"[AppleMusic] Plugin initialized with config:");
         _logger.LogInformation($"  - Enabled: {config.IsEnabled}");
-        _logger.LogInformation($"  - Background Blur: {config.EnableBackgroundBlur}");
-        _logger.LogInformation($"  - Blur Amount: {config.BlurAmount}px");
-        _logger.LogInformation($"  - Dynamic Blending: {config.EnableDynamicBlending}");
-        _logger.LogInformation($"  - Font Size: {config.FontSize}px");
+        _logger.LogInformation($"  - Debug Mode: {config.EnableDebugMode}");
+        _logger.LogInformation($"  - Font Landscape: {config.FontSizeLandscape}px");
+        _logger.LogInformation($"  - Font Portrait: {config.FontSizePortrait}px");
+        _logger.LogInformation($"  - Background Blur: {config.BackgroundBlur}px");
+        _logger.LogInformation($"  - Background Brightness: {config.BackgroundBrightness}");
     }
 
     /// <summary>

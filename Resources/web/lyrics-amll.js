@@ -6,18 +6,69 @@
 (function() {
     'use strict';
 
-    // ========== 调试模式配置 ==========
-    // 设置为 true 开启详细调试日志，false 为生产模式
-    const DEBUG_MODE = false;
+    // ========== 配置对象 ==========
+    let AMLL_CONFIG = {
+        // 基础设置
+        IsEnabled: true,
+        EnableDebugMode: false,
+        
+        // 字体设置
+        FontSizeLandscape: 32,
+        FontSizePortrait: 24,
+        ActiveFontSizeLandscape: 48,
+        ActiveFontSizePortrait: 36,
+        
+        // 背景设置
+        BackgroundBlur: 60,
+        BackgroundBrightness: 0.8,
+        
+        // 非活跃歌词设置
+        InactiveBrightness: 0.85,
+        InactiveOpacity: 0.65,
+        InactiveShadowIntensity: 0.5,
+        InactiveBlur: 0.5,
+        
+        // 活跃歌词设置
+        ActiveBrightness: 1.15,
+        ActiveOpacity: 1.0,
+        ActiveGlowIntensity: 0.2,
+        ActiveShadowIntensity: 0.15,
+        ActiveBlur: 0.0,
+        
+        // 渐变模糊设置
+        GradientBlurAmount: 1.0,
+        GradientBlurRange: 3,
+        
+        // 动画设置
+        ScrollDuration: 1000,
+        SpringSpeed: 1.0,
+        TransformDuration: 800
+    };
     
     // 调试日志函数
     const debugLog = (...args) => {
-        if (DEBUG_MODE) {
+        if (AMLL_CONFIG.EnableDebugMode) {
             console.log('[AMLL DEBUG]', ...args);
         }
     };
     
-    console.log('[AMLL] Lyrics interceptor loaded (DEBUG_MODE:', DEBUG_MODE, ')');
+    // 加载配置
+    async function loadConfig() {
+        try {
+            const response = await fetch('/applelyrics/config');
+            if (response.ok) {
+                const config = await response.json();
+                AMLL_CONFIG = { ...AMLL_CONFIG, ...config };
+                console.log('[AMLL] Configuration loaded:', AMLL_CONFIG);
+            } else {
+                console.warn('[AMLL] Failed to load config, using defaults');
+            }
+        } catch (error) {
+            console.warn('[AMLL] Error loading config, using defaults:', error);
+        }
+    }
+    
+    console.log('[AMLL] Lyrics interceptor loaded');
 
     // 播放管理器引用（从页面事件中获取）
     let playbackManagerRef = null;
@@ -26,6 +77,11 @@
     let currentSyncInterval = null; // 当前的同步定时器
     let currentHashChangeHandler = null; // 当前的hash变化监听器
     let lastInterceptedContainer = null; // 记录上次拦截的容器,用于检测容器变化
+    
+    // 检测设备类型
+    function isMobileDevice() {
+        return window.innerWidth < window.innerHeight || window.innerWidth < 768;
+    }
 
     // 尝试从全局获取 playbackManager
     function tryGetPlaybackManager() {
@@ -327,7 +383,7 @@
             const bgContainer = document.createElement('div');
             bgContainer.className = 'amll-background';
             
-            // 如果有专辑封面,使用模糊背景
+            // 如果有专辑封面,使用模糊背景 (使用配置)
             if (albumArt) {
                 bgContainer.style.cssText = `
                     position: absolute;
@@ -339,7 +395,7 @@
                     background-image: url('${albumArt}');
                     background-size: cover;
                     background-position: center;
-                    filter: blur(60px) brightness(0.8);
+                    filter: blur(${AMLL_CONFIG.BackgroundBlur}px) brightness(${AMLL_CONFIG.BackgroundBrightness});
                     transform: scale(1.2);
                     pointer-events: none;
                 `;
@@ -447,6 +503,12 @@
     function addAMLLStyles() {
         if (document.getElementById('amll-styles')) return;
 
+        const cfg = AMLL_CONFIG;
+        const isMobile = isMobileDevice();
+        const baseFontSize = isMobile ? cfg.FontSizePortrait : cfg.FontSizeLandscape;
+        const activeFontSize = isMobile ? cfg.ActiveFontSizePortrait : cfg.ActiveFontSizeLandscape;
+        const transformDuration = cfg.TransformDuration / 1000; // ms to s
+        
         const style = document.createElement('style');
         style.id = 'amll-styles';
         style.textContent = `
@@ -455,7 +517,7 @@
                 display: none;
             }
 
-            /* 歌词行基础样式 */
+            /* 歌词行基础样式 - 响应式字体大小 */
             .amll-lyric-line {
                 position: relative;
                 padding: 0.75em 1.5em;
@@ -464,13 +526,14 @@
                 cursor: pointer;
                 backface-visibility: hidden;
                 will-change: transform, filter, opacity;
+                font-size: ${baseFontSize}px;
                 /* 添加自动换行支持，防止长歌词造成布局跳动 */
                 word-wrap: break-word;
                 word-break: break-word;
                 white-space: pre-wrap;
                 overflow-wrap: break-word;
                 transition: 
-                    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform ${transformDuration}s cubic-bezier(0.16, 1, 0.3, 1),
                     filter 0.3s ease,
                     opacity 0.3s ease,
                     background-color 0.25s ease,
@@ -478,22 +541,37 @@
                     font-size 0.3s ease;
             }
 
-            /* 活动歌词行 - Apple Music 风格 (优化后) */
+            /* 活动歌词行 - Apple Music 风格 (可配置，响应式字体) */
             .amll-lyric-line.active {
-                color: rgba(255, 255, 255, 1) !important;
+                color: rgba(255, 255, 255, ${cfg.ActiveOpacity}) !important;
                 font-weight: 600 !important;
+                font-size: ${activeFontSize}px;
                 transform: scale(1.08);
-                /* 减轻阴影效果 */
                 text-shadow: 
-                    0 0 20px rgba(255, 255, 255, 0.2),
-                    0 1px 4px rgba(0, 0, 0, 0.15);
-                filter: blur(0px) brightness(1.15);
+                    0 0 20px rgba(255, 255, 255, ${cfg.ActiveGlowIntensity}),
+                    0 1px 4px rgba(0, 0, 0, ${cfg.ActiveShadowIntensity});
+                filter: blur(${cfg.ActiveBlur}px) brightness(${cfg.ActiveBrightness});
             }
 
-            /* 非活动歌词行 - 模糊效果 (提亮背景) */
+            /* 非活动歌词行 - 模糊效果 (可配置) */
             .amll-lyric-line:not(.active) {
-                filter: blur(0.5px) brightness(0.85);
-                opacity: 0.65;
+                filter: blur(${cfg.InactiveBlur}px) brightness(${cfg.InactiveBrightness});
+                opacity: ${cfg.InactiveOpacity};
+                text-shadow: 0 1px 6px rgba(0,0,0,${cfg.InactiveShadowIntensity});
+            }
+
+            /* 渐变模糊效果 - 活跃歌词前后的歌词 */
+            .amll-lyric-line.gradient-blur-1 {
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 0.3}px) brightness(${cfg.InactiveBrightness * 0.95});
+                opacity: ${cfg.InactiveOpacity * 0.85};
+            }
+            .amll-lyric-line.gradient-blur-2 {
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount * 0.6}px) brightness(${cfg.InactiveBrightness * 0.9});
+                opacity: ${cfg.InactiveOpacity * 0.7};
+            }
+            .amll-lyric-line.gradient-blur-3 {
+                filter: blur(${cfg.InactiveBlur + cfg.GradientBlurAmount}px) brightness(${cfg.InactiveBrightness * 0.85});
+                opacity: ${cfg.InactiveOpacity * 0.6};
             }
 
             /* Hover 效果 - Apple Music 风格 */
@@ -628,7 +706,8 @@
     }
 
     // 平滑滚动函数 - 使用 cubic-bezier 缓动
-    function smoothScrollTo(element, targetScrollTop, duration = 1000) {
+    function smoothScrollTo(element, targetScrollTop, duration) {
+        duration = duration || AMLL_CONFIG.ScrollDuration;
         const startScrollTop = element.scrollTop;
         const distance = targetScrollTop - startScrollTop;
         const startTime = performance.now();
@@ -655,25 +734,32 @@
 
     // 更新活跃歌词
     function updateActiveLyric(scrollContainer, index) {
-        // 移除所有高亮
+        const cfg = AMLL_CONFIG;
+        const gradientRange = cfg.GradientBlurRange;
+        
+        // 移除所有高亮和渐变类
         const allLines = scrollContainer.querySelectorAll('.amll-lyric-line');
-        allLines.forEach(line => {
-            line.classList.remove('active');
-            // 重置非活跃歌词样式
-            line.style.fontSize = '32px';
-            line.style.color = 'rgba(255, 255, 255, 0.4)';
-            line.style.transform = 'scale(1)';
+        allLines.forEach((line, i) => {
+            line.classList.remove('active', 'gradient-blur-1', 'gradient-blur-2', 'gradient-blur-3');
+            
+            // 计算距离当前活跃歌词的距离
+            const lineIndex = parseInt(line.getAttribute('data-index'));
+            const distance = Math.abs(lineIndex - index);
+            
+            // 应用渐变模糊效果
+            if (distance > 0 && distance <= gradientRange) {
+                if (distance <= Math.min(gradientRange, 3)) {
+                    line.classList.add(`gradient-blur-${distance}`);
+                    debugLog(`Applied gradient-blur-${distance} to line ${lineIndex}`);
+                }
+            }
         });
 
         // 高亮当前行
         const currentLine = scrollContainer.querySelector(`.amll-lyric-line[data-index="${index}"]`);
         if (currentLine) {
             currentLine.classList.add('active');
-            // 增强活跃歌词样式
-            currentLine.style.fontSize = '48px';
-            currentLine.style.color = 'rgba(255, 255, 255, 1)';
-            currentLine.style.transform = 'scale(1.1)';
-            currentLine.style.fontWeight = '600';
+            debugLog('Active lyric:', currentLine.textContent);
 
             // 使用 requestAnimationFrame 确保 DOM 已更新
             requestAnimationFrame(() => {
@@ -695,8 +781,8 @@
                     currentScrollTop: scrollContainer.scrollTop
                 });
                 
-                // 使用更平滑的自定义滚动动画
-                smoothScrollTo(scrollContainer, Math.max(0, scrollTo), 600);
+                // 使用更平滑的自定义滚动动画 (使用配置的滚动时长)
+                smoothScrollTo(scrollContainer, Math.max(0, scrollTo), AMLL_CONFIG.ScrollDuration);
             });
         }
     }
@@ -774,10 +860,13 @@
     }
 
     // 初始化
-    function init() {
+    async function init() {
         console.log('[AMLL] Initializing...');
         console.log('[AMLL] Current URL:', window.location.href);
         console.log('[AMLL] Current hash:', window.location.hash);
+        
+        // 加载配置
+        await loadConfig();
         
         // 尝试获取 playbackManager
         playbackManagerRef = tryGetPlaybackManager();

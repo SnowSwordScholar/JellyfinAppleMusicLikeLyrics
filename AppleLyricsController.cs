@@ -127,7 +127,7 @@ public class AppleLyricsController : ControllerBase
     }
 
     /// <summary>
-    /// 获取配置信息
+    /// 获取配置信息 / Get Configuration
     /// </summary>
     [HttpGet("config")]
     public ActionResult GetConfig()
@@ -142,11 +142,43 @@ public class AppleLyricsController : ControllerBase
             var config = Plugin.Instance.Configuration;
             return Ok(new
             {
+                // 基础设置
                 config.IsEnabled,
-                config.EnableBackgroundBlur,
-                config.BlurAmount,
-                config.EnableDynamicBlending,
-                config.FontSize,
+                config.EnableDebugMode,
+                
+                // 字体设置
+                config.FontSizeLandscape,
+                config.FontSizePortrait,
+                config.ActiveFontSizeLandscape,
+                config.ActiveFontSizePortrait,
+                
+                // 背景设置
+                config.BackgroundBlur,
+                config.BackgroundBrightness,
+                
+                // 非活跃歌词设置
+                config.InactiveBrightness,
+                config.InactiveOpacity,
+                config.InactiveShadowIntensity,
+                config.InactiveBlur,
+                
+                // 活跃歌词设置
+                config.ActiveBrightness,
+                config.ActiveOpacity,
+                config.ActiveGlowIntensity,
+                config.ActiveShadowIntensity,
+                config.ActiveBlur,
+                
+                // 渐变模糊设置
+                config.GradientBlurAmount,
+                config.GradientBlurRange,
+                
+                // 动画设置
+                config.ScrollDuration,
+                config.SpringSpeed,
+                config.TransformDuration,
+                
+                // 其他设置
                 config.EnableAutoFetch
             });
         }

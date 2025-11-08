@@ -2,44 +2,261 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Apple Music Lyrics</title>
+    <title>Apple Music Lyrics Configuration</title>
+    <style>
+        .configSection {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+        .configSection h3 {
+            margin-top: 0;
+            color: #00A4DC;
+            font-size: 1.2em;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+        .inputContainer {
+            margin: 15px 0;
+        }
+        .fieldDescription {
+            font-size: 0.9em;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        .rangeValue {
+            display: inline-block;
+            min-width: 50px;
+            text-align: center;
+            font-weight: bold;
+            color: #00A4DC;
+        }
+    </style>
 </head>
 <body>
-    <div id="AppleLyricsConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+    <div id="AppleLyricsConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
         <div data-role="content">
             <div class="content-primary">
                 <form id="AppleLyricsConfigForm">
-                    <div class="checkboxContainer checkboxContainer-withDescription">
-                        <label class="emby-checkbox-label">
-                            <input id="IsEnabled" name="IsEnabled" type="checkbox" is="emby-checkbox" />
-                            <span>Enable Plugin</span>
-                        </label>
-                        <div class="fieldDescription">Enable this to show Apple Music-style lyrics in Now Playing view</div>
+                    
+                    <!-- 基础设置 / Basic Settings -->
+                    <div class="configSection">
+                        <h3>🎵 基础设置 / Basic Settings</h3>
+                        
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="IsEnabled" type="checkbox" is="emby-checkbox" />
+                                <span>启用插件 / Enable Plugin</span>
+                            </label>
+                            <div class="fieldDescription">启用Apple Music风格歌词 / Enable Apple Music-style lyrics</div>
+                        </div>
+                        
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="EnableDebugMode" type="checkbox" is="emby-checkbox" />
+                                <span>调试模式 / Debug Mode</span>
+                            </label>
+                            <div class="fieldDescription">在控制台输出详细日志 / Output detailed logs to console</div>
+                        </div>
+                    </div>
+
+                    <!-- 字体设置 / Font Settings -->
+                    <div class="configSection">
+                        <h3>📝 字体设置 / Font Settings</h3>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="FontSizeLandscape">
+                                横屏字体大小 / Landscape Font Size (px): <span id="FontSizeLandscapeValue" class="rangeValue">32</span>
+                            </label>
+                            <input id="FontSizeLandscape" type="range" is="emby-input" min="16" max="64" step="2" />
+                            <div class="fieldDescription">桌面/横屏设备的默认字体大小 / Default font size for desktop/landscape</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="FontSizePortrait">
+                                竖屏字体大小 / Portrait Font Size (px): <span id="FontSizePortraitValue" class="rangeValue">24</span>
+                            </label>
+                            <input id="FontSizePortrait" type="range" is="emby-input" min="14" max="48" step="2" />
+                            <div class="fieldDescription">移动设备/竖屏的字体大小 / Font size for mobile/portrait</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ActiveFontSizeLandscape">
+                                横屏活跃歌词字体 / Landscape Active Font (px): <span id="ActiveFontSizeLandscapeValue" class="rangeValue">48</span>
+                            </label>
+                            <input id="ActiveFontSizeLandscape" type="range" is="emby-input" min="24" max="96" step="2" />
+                            <div class="fieldDescription">桌面/横屏设备的活跃歌词字体大小 / Active lyric font for desktop/landscape</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ActiveFontSizePortrait">
+                                竖屏活跃歌词字体 / Portrait Active Font (px): <span id="ActiveFontSizePortraitValue" class="rangeValue">36</span>
+                            </label>
+                            <input id="ActiveFontSizePortrait" type="range" is="emby-input" min="18" max="72" step="2" />
+                            <div class="fieldDescription">移动设备/竖屏的活跃歌词字体大小 / Active lyric font for mobile/portrait</div>
+                        </div>
+                    </div>
+
+                    <!-- 背景设置 / Background Settings -->
+                    <div class="configSection">
+                        <h3>🖼️ 背景设置 / Background Settings</h3>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="BackgroundBlur">
+                                背景模糊程度 / Background Blur (px): <span id="BackgroundBlurValue" class="rangeValue">60</span>
+                            </label>
+                            <input id="BackgroundBlur" type="range" is="emby-input" min="0" max="100" step="5" />
+                            <div class="fieldDescription">专辑封面背景的模糊程度 / Blur amount for album art background</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="BackgroundBrightness">
+                                背景亮度 / Background Brightness: <span id="BackgroundBrightnessValue" class="rangeValue">0.8</span>
+                            </label>
+                            <input id="BackgroundBrightness" type="range" is="emby-input" min="0" max="2" step="0.05" />
+                            <div class="fieldDescription">背景整体亮度 (0.0=全黑, 1.0=原始, 2.0=加倍) / Background brightness (0.0=black, 1.0=original, 2.0=doubled)</div>
+                        </div>
+                    </div>
+
+                    <!-- 非活跃歌词设置 / Inactive Lyric Settings -->
+                    <div class="configSection">
+                        <h3>💤 非活跃歌词设置 / Inactive Lyric Settings</h3>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="InactiveBrightness">
+                                亮度 / Brightness: <span id="InactiveBrightnessValue" class="rangeValue">0.85</span>
+                            </label>
+                            <input id="InactiveBrightness" type="range" is="emby-input" min="0" max="2" step="0.05" />
+                            <div class="fieldDescription">非活跃歌词的亮度 / Brightness of inactive lyrics</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="InactiveOpacity">
+                                透明度 / Opacity: <span id="InactiveOpacityValue" class="rangeValue">0.65</span>
+                            </label>
+                            <input id="InactiveOpacity" type="range" is="emby-input" min="0" max="1" step="0.05" />
+                            <div class="fieldDescription">非活跃歌词的透明度 (0.0=完全透明, 1.0=完全不透明) / Opacity (0.0=transparent, 1.0=opaque)</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="InactiveShadowIntensity">
+                                阴影强度 / Shadow Intensity: <span id="InactiveShadowIntensityValue" class="rangeValue">0.5</span>
+                            </label>
+                            <input id="InactiveShadowIntensity" type="range" is="emby-input" min="0" max="1" step="0.05" />
+                            <div class="fieldDescription">非活跃歌词的阴影强度 / Shadow intensity of inactive lyrics</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="InactiveBlur">
+                                模糊程度 / Blur Amount (px): <span id="InactiveBlurValue" class="rangeValue">0.5</span>
+                            </label>
+                            <input id="InactiveBlur" type="range" is="emby-input" min="0" max="10" step="0.1" />
+                            <div class="fieldDescription">非活跃歌词的模糊程度 / Blur amount for inactive lyrics</div>
+                        </div>
+                    </div>
+
+                    <!-- 活跃歌词设置 / Active Lyric Settings -->
+                    <div class="configSection">
+                        <h3>⭐ 活跃歌词设置 / Active Lyric Settings</h3>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ActiveBrightness">
+                                亮度 / Brightness: <span id="ActiveBrightnessValue" class="rangeValue">1.15</span>
+                            </label>
+                            <input id="ActiveBrightness" type="range" is="emby-input" min="0" max="2" step="0.05" />
+                            <div class="fieldDescription">活跃歌词的亮度 / Brightness of active lyric</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ActiveOpacity">
+                                透明度 / Opacity: <span id="ActiveOpacityValue" class="rangeValue">1.0</span>
+                            </label>
+                            <input id="ActiveOpacity" type="range" is="emby-input" min="0" max="1" step="0.05" />
+                            <div class="fieldDescription">活跃歌词的透明度 / Opacity of active lyric</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ActiveGlowIntensity">
+                                发光强度 / Glow Intensity: <span id="ActiveGlowIntensityValue" class="rangeValue">0.2</span>
+                            </label>
+                            <input id="ActiveGlowIntensity" type="range" is="emby-input" min="0" max="1" step="0.05" />
+                            <div class="fieldDescription">活跃歌词的发光效果强度 / Glow effect intensity for active lyric</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ActiveShadowIntensity">
+                                阴影强度 / Shadow Intensity: <span id="ActiveShadowIntensityValue" class="rangeValue">0.15</span>
+                            </label>
+                            <input id="ActiveShadowIntensity" type="range" is="emby-input" min="0" max="1" step="0.05" />
+                            <div class="fieldDescription">活跃歌词的阴影强度 / Shadow intensity of active lyric</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ActiveBlur">
+                                模糊程度 / Blur Amount (px): <span id="ActiveBlurValue" class="rangeValue">0.0</span>
+                            </label>
+                            <input id="ActiveBlur" type="range" is="emby-input" min="0" max="10" step="0.1" />
+                            <div class="fieldDescription">活跃歌词的模糊程度(通常为0) / Blur amount for active lyric (usually 0)</div>
+                        </div>
+                    </div>
+
+                    <!-- 渐变模糊设置 / Gradient Blur Settings -->
+                    <div class="configSection">
+                        <h3>🌈 渐变模糊设置 / Gradient Blur Settings</h3>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="GradientBlurAmount">
+                                渐变模糊强度 / Gradient Blur Amount: <span id="GradientBlurAmountValue" class="rangeValue">1.0</span>
+                            </label>
+                            <input id="GradientBlurAmount" type="range" is="emby-input" min="0" max="10" step="0.1" />
+                            <div class="fieldDescription">活跃歌词前后的渐变模糊强度 / Gradient blur intensity around active lyric</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="GradientBlurRange">
+                                渐变影响范围 / Gradient Range (lines): <span id="GradientBlurRangeValue" class="rangeValue">3</span>
+                            </label>
+                            <input id="GradientBlurRange" type="range" is="emby-input" min="1" max="10" step="1" />
+                            <div class="fieldDescription">渐变模糊影响的歌词行数 / Number of lyrics lines affected by gradient blur</div>
+                        </div>
+                    </div>
+
+                    <!-- 动画设置 / Animation Settings -->
+                    <div class="configSection">
+                        <h3>🎬 动画设置 / Animation Settings</h3>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ScrollDuration">
+                                滚动时长 / Scroll Duration (ms): <span id="ScrollDurationValue" class="rangeValue">1000</span>
+                            </label>
+                            <input id="ScrollDuration" type="range" is="emby-input" min="300" max="2000" step="100" />
+                            <div class="fieldDescription">切换歌词时的滚动动画时长 / Scroll animation duration when switching lyrics</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="SpringSpeed">
+                                弹簧速度 / Spring Speed: <span id="SpringSpeedValue" class="rangeValue">1.0</span>
+                            </label>
+                            <input id="SpringSpeed" type="range" is="emby-input" min="0.1" max="5" step="0.1" />
+                            <div class="fieldDescription">弹簧动画的速度系数 (1.0=标准, >1.0=更快, <1.0=更慢) / Spring animation speed (1.0=standard, >1.0=faster, <1.0=slower)</div>
+                        </div>
+                        
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="TransformDuration">
+                                变换时长 / Transform Duration (ms): <span id="TransformDurationValue" class="rangeValue">800</span>
+                            </label>
+                            <input id="TransformDuration" type="range" is="emby-input" min="200" max="2000" step="100" />
+                            <div class="fieldDescription">歌词缩放/透明度变换的时长 / Duration for lyric transform/opacity transitions</div>
+                        </div>
                     </div>
                     
-                    <div class="checkboxContainer checkboxContainer-withDescription">
-                        <label class="emby-checkbox-label">
-                            <input id="EnableBackgroundBlur" name="EnableBackgroundBlur" type="checkbox" is="emby-checkbox" />
-                            <span>Enable Background Blur</span>
-                        </label>
-                        <div class="fieldDescription">Adds a gaussian blur to the background</div>
-                    </div>
-                    
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="BlurAmount">Blur Amount (0-100)</label>
-                        <input id="BlurAmount" name="BlurAmount" type="number" is="emby-input" min="0" max="100" />
-                        <div class="fieldDescription">Amount of blur to apply to the background</div>
-                    </div>
-                    
-                    <div class="inputContainer">
-                        <label class="inputLabel inputLabelUnfocused" for="FontSize">Font Size (10-100)</label>
-                        <input id="FontSize" name="FontSize" type="number" is="emby-input" min="10" max="100" />
-                        <div class="fieldDescription">Font size for lyrics display</div>
-                    </div>
-                    
-                    <div>
-                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
-                            <span>Save</span>
+                    <div style="margin-top: 30px; display: flex; gap: 15px;">
+                        <button is="emby-button" type="submit" class="raised button-submit emby-button" style="flex: 1;">
+                            <span>💾 保存设置 / Save Settings</span>
+                        </button>
+                        <button is="emby-button" type="button" id="resetDefaults" class="raised emby-button" style="flex: 1; background-color: #e74c3c;">
+                            <span>🔄 恢复默认 / Reset Defaults</span>
                         </button>
                     </div>
                 </form>
@@ -51,34 +268,224 @@
                 pluginUniqueId: '56AF82E5-609E-455D-A135-4B30A73333E5'
             };
 
+            // 辅助函数：更新滑块显示值
+            function updateRangeValue(inputId, valueId, value) {
+                var valueElement = document.getElementById(valueId);
+                if (valueElement) {
+                    valueElement.textContent = value;
+                }
+            }
+
+            // 绑定所有滑块的实时显示
+            function bindRangeInputs() {
+                var rangeInputs = [
+                    'FontSizeLandscape', 'FontSizePortrait', 'ActiveFontSizeLandscape', 'ActiveFontSizePortrait',
+                    'BackgroundBlur', 'BackgroundBrightness',
+                    'InactiveBrightness', 'InactiveOpacity', 'InactiveShadowIntensity', 'InactiveBlur',
+                    'ActiveBrightness', 'ActiveOpacity', 'ActiveGlowIntensity', 'ActiveShadowIntensity', 'ActiveBlur',
+                    'GradientBlurAmount', 'GradientBlurRange',
+                    'ScrollDuration', 'SpringSpeed', 'TransformDuration'
+                ];
+
+                rangeInputs.forEach(function(id) {
+                    var input = document.getElementById(id);
+                    if (input) {
+                        input.addEventListener('input', function() {
+                            updateRangeValue(id, id + 'Value', this.value);
+                        });
+                    }
+                });
+            }
+
             document.querySelector('#AppleLyricsConfigPage')
                 .addEventListener('pageshow', function() {
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(AppleLyricsConfig.pluginUniqueId).then(function (config) {
+                        // 基础设置
                         document.querySelector('#IsEnabled').checked = config.IsEnabled !== false;
-                        document.querySelector('#EnableBackgroundBlur').checked = config.EnableBackgroundBlur !== false;
-                        document.querySelector('#BlurAmount').value = config.BlurAmount !== undefined && config.BlurAmount !== null ? config.BlurAmount : 30;
-                        document.querySelector('#FontSize').value = config.FontSize || 32;
+                        document.querySelector('#EnableDebugMode').checked = config.EnableDebugMode || false;
+
+                        // 字体设置
+                        var fontLandscape = config.FontSizeLandscape || 32;
+                        var fontPortrait = config.FontSizePortrait || 24;
+                        var activeFontLandscape = config.ActiveFontSizeLandscape || 48;
+                        var activeFontPortrait = config.ActiveFontSizePortrait || 36;
+                        document.querySelector('#FontSizeLandscape').value = fontLandscape;
+                        document.querySelector('#FontSizePortrait').value = fontPortrait;
+                        document.querySelector('#ActiveFontSizeLandscape').value = activeFontLandscape;
+                        document.querySelector('#ActiveFontSizePortrait').value = activeFontPortrait;
+                        updateRangeValue('FontSizeLandscape', 'FontSizeLandscapeValue', fontLandscape);
+                        updateRangeValue('FontSizePortrait', 'FontSizePortraitValue', fontPortrait);
+                        updateRangeValue('ActiveFontSizeLandscape', 'ActiveFontSizeLandscapeValue', activeFontLandscape);
+                        updateRangeValue('ActiveFontSizePortrait', 'ActiveFontSizePortraitValue', activeFontPortrait);
+
+                        // 背景设置
+                        var bgBlur = config.BackgroundBlur !== undefined ? config.BackgroundBlur : 60;
+                        var bgBrightness = config.BackgroundBrightness !== undefined ? config.BackgroundBrightness : 0.8;
+                        document.querySelector('#BackgroundBlur').value = bgBlur;
+                        document.querySelector('#BackgroundBrightness').value = bgBrightness;
+                        updateRangeValue('BackgroundBlur', 'BackgroundBlurValue', bgBlur);
+                        updateRangeValue('BackgroundBrightness', 'BackgroundBrightnessValue', bgBrightness);
+
+                        // 非活跃歌词设置
+                        var inactiveBrightness = config.InactiveBrightness !== undefined ? config.InactiveBrightness : 0.85;
+                        var inactiveOpacity = config.InactiveOpacity !== undefined ? config.InactiveOpacity : 0.65;
+                        var inactiveShadow = config.InactiveShadowIntensity !== undefined ? config.InactiveShadowIntensity : 0.5;
+                        var inactiveBlur = config.InactiveBlur !== undefined ? config.InactiveBlur : 0.5;
+                        document.querySelector('#InactiveBrightness').value = inactiveBrightness;
+                        document.querySelector('#InactiveOpacity').value = inactiveOpacity;
+                        document.querySelector('#InactiveShadowIntensity').value = inactiveShadow;
+                        document.querySelector('#InactiveBlur').value = inactiveBlur;
+                        updateRangeValue('InactiveBrightness', 'InactiveBrightnessValue', inactiveBrightness);
+                        updateRangeValue('InactiveOpacity', 'InactiveOpacityValue', inactiveOpacity);
+                        updateRangeValue('InactiveShadowIntensity', 'InactiveShadowIntensityValue', inactiveShadow);
+                        updateRangeValue('InactiveBlur', 'InactiveBlurValue', inactiveBlur);
+
+                        // 活跃歌词设置
+                        var activeBrightness = config.ActiveBrightness !== undefined ? config.ActiveBrightness : 1.15;
+                        var activeOpacity = config.ActiveOpacity !== undefined ? config.ActiveOpacity : 1.0;
+                        var activeGlow = config.ActiveGlowIntensity !== undefined ? config.ActiveGlowIntensity : 0.2;
+                        var activeShadow = config.ActiveShadowIntensity !== undefined ? config.ActiveShadowIntensity : 0.15;
+                        var activeBlur = config.ActiveBlur !== undefined ? config.ActiveBlur : 0.0;
+                        document.querySelector('#ActiveBrightness').value = activeBrightness;
+                        document.querySelector('#ActiveOpacity').value = activeOpacity;
+                        document.querySelector('#ActiveGlowIntensity').value = activeGlow;
+                        document.querySelector('#ActiveShadowIntensity').value = activeShadow;
+                        document.querySelector('#ActiveBlur').value = activeBlur;
+                        updateRangeValue('ActiveBrightness', 'ActiveBrightnessValue', activeBrightness);
+                        updateRangeValue('ActiveOpacity', 'ActiveOpacityValue', activeOpacity);
+                        updateRangeValue('ActiveGlowIntensity', 'ActiveGlowIntensityValue', activeGlow);
+                        updateRangeValue('ActiveShadowIntensity', 'ActiveShadowIntensityValue', activeShadow);
+                        updateRangeValue('ActiveBlur', 'ActiveBlurValue', activeBlur);
+
+                        // 渐变模糊设置
+                        var gradientBlur = config.GradientBlurAmount !== undefined ? config.GradientBlurAmount : 1.0;
+                        var gradientRange = config.GradientBlurRange !== undefined ? config.GradientBlurRange : 3;
+                        document.querySelector('#GradientBlurAmount').value = gradientBlur;
+                        document.querySelector('#GradientBlurRange').value = gradientRange;
+                        updateRangeValue('GradientBlurAmount', 'GradientBlurAmountValue', gradientBlur);
+                        updateRangeValue('GradientBlurRange', 'GradientBlurRangeValue', gradientRange);
+
+                        // 动画设置
+                        var scrollDuration = config.ScrollDuration !== undefined ? config.ScrollDuration : 1000;
+                        var springSpeed = config.SpringSpeed !== undefined ? config.SpringSpeed : 1.0;
+                        var transformDuration = config.TransformDuration !== undefined ? config.TransformDuration : 800;
+                        document.querySelector('#ScrollDuration').value = scrollDuration;
+                        document.querySelector('#SpringSpeed').value = springSpeed;
+                        document.querySelector('#TransformDuration').value = transformDuration;
+                        updateRangeValue('ScrollDuration', 'ScrollDurationValue', scrollDuration);
+                        updateRangeValue('SpringSpeed', 'SpringSpeedValue', springSpeed);
+                        updateRangeValue('TransformDuration', 'TransformDurationValue', transformDuration);
+
+                        // 绑定滑块事件
+                        bindRangeInputs();
+
                         Dashboard.hideLoadingMsg();
                     });
                 });
 
             document.querySelector('#AppleLyricsConfigForm')
                 .addEventListener('submit', function(e) {
+                    e.preventDefault();
                     Dashboard.showLoadingMsg();
+                    
                     ApiClient.getPluginConfiguration(AppleLyricsConfig.pluginUniqueId).then(function (config) {
+                        // 基础设置
                         config.IsEnabled = document.querySelector('#IsEnabled').checked;
-                        config.EnableBackgroundBlur = document.querySelector('#EnableBackgroundBlur').checked;
-                        config.BlurAmount = parseInt(document.querySelector('#BlurAmount').value, 10);
-                        config.FontSize = parseInt(document.querySelector('#FontSize').value, 10);
+                        config.EnableDebugMode = document.querySelector('#EnableDebugMode').checked;
+
+                        // 字体设置
+                        config.FontSizeLandscape = parseInt(document.querySelector('#FontSizeLandscape').value, 10);
+                        config.FontSizePortrait = parseInt(document.querySelector('#FontSizePortrait').value, 10);
+                        config.ActiveFontSizeLandscape = parseInt(document.querySelector('#ActiveFontSizeLandscape').value, 10);
+                        config.ActiveFontSizePortrait = parseInt(document.querySelector('#ActiveFontSizePortrait').value, 10);
+
+                        // 背景设置
+                        config.BackgroundBlur = parseInt(document.querySelector('#BackgroundBlur').value, 10);
+                        config.BackgroundBrightness = parseFloat(document.querySelector('#BackgroundBrightness').value);
+
+                        // 非活跃歌词设置
+                        config.InactiveBrightness = parseFloat(document.querySelector('#InactiveBrightness').value);
+                        config.InactiveOpacity = parseFloat(document.querySelector('#InactiveOpacity').value);
+                        config.InactiveShadowIntensity = parseFloat(document.querySelector('#InactiveShadowIntensity').value);
+                        config.InactiveBlur = parseFloat(document.querySelector('#InactiveBlur').value);
+
+                        // 活跃歌词设置
+                        config.ActiveBrightness = parseFloat(document.querySelector('#ActiveBrightness').value);
+                        config.ActiveOpacity = parseFloat(document.querySelector('#ActiveOpacity').value);
+                        config.ActiveGlowIntensity = parseFloat(document.querySelector('#ActiveGlowIntensity').value);
+                        config.ActiveShadowIntensity = parseFloat(document.querySelector('#ActiveShadowIntensity').value);
+                        config.ActiveBlur = parseFloat(document.querySelector('#ActiveBlur').value);
+
+                        // 渐变模糊设置
+                        config.GradientBlurAmount = parseFloat(document.querySelector('#GradientBlurAmount').value);
+                        config.GradientBlurRange = parseInt(document.querySelector('#GradientBlurRange').value, 10);
+
+                        // 动画设置
+                        config.ScrollDuration = parseInt(document.querySelector('#ScrollDuration').value, 10);
+                        config.SpringSpeed = parseFloat(document.querySelector('#SpringSpeed').value);
+                        config.TransformDuration = parseInt(document.querySelector('#TransformDuration').value, 10);
                         
                         ApiClient.updatePluginConfiguration(AppleLyricsConfig.pluginUniqueId, config).then(function (result) {
                             Dashboard.processPluginConfigurationUpdateResult(result);
                         });
                     });
 
-                    e.preventDefault();
                     return false;
+                });
+
+            // 恢复默认配置
+            document.querySelector('#resetDefaults')
+                .addEventListener('click', function() {
+                    if (!confirm('确定要恢复所有设置到默认值吗？\nAre you sure you want to reset all settings to defaults?')) {
+                        return;
+                    }
+
+                    Dashboard.showLoadingMsg();
+                    
+                    ApiClient.getPluginConfiguration(AppleLyricsConfig.pluginUniqueId).then(function (config) {
+                        // 基础设置
+                        config.IsEnabled = true;
+                        config.EnableDebugMode = false;
+
+                        // 字体设置
+                        config.FontSizeLandscape = 32;
+                        config.FontSizePortrait = 24;
+                        config.ActiveFontSizeLandscape = 48;
+                        config.ActiveFontSizePortrait = 36;
+
+                        // 背景设置
+                        config.BackgroundBlur = 60;
+                        config.BackgroundBrightness = 0.8;
+
+                        // 非活跃歌词设置
+                        config.InactiveBrightness = 0.85;
+                        config.InactiveOpacity = 0.65;
+                        config.InactiveShadowIntensity = 0.5;
+                        config.InactiveBlur = 0.5;
+
+                        // 活跃歌词设置
+                        config.ActiveBrightness = 1.15;
+                        config.ActiveOpacity = 1.0;
+                        config.ActiveGlowIntensity = 0.2;
+                        config.ActiveShadowIntensity = 0.15;
+                        config.ActiveBlur = 0.0;
+
+                        // 渐变模糊设置
+                        config.GradientBlurAmount = 1.0;
+                        config.GradientBlurRange = 3;
+
+                        // 动画设置
+                        config.ScrollDuration = 1000;
+                        config.SpringSpeed = 1.0;
+                        config.TransformDuration = 800;
+                        
+                        ApiClient.updatePluginConfiguration(AppleLyricsConfig.pluginUniqueId, config).then(function (result) {
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                            // 重新加载页面以刷新显示
+                            window.location.reload();
+                        });
+                    });
                 });
         </script>
     </div>
