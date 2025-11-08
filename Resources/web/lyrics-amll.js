@@ -105,16 +105,19 @@
                         node.querySelector && node.querySelector('.lyricsLine')
                     );
 
-                    // 检查整个容器是否现在有歌词
+                    // 检查整个容器是否现在有歌词(并且不是我们自己的 AMLL 歌词)
                     const containerHasLyrics = lyricsContainer.querySelector('.lyricsLine');
+                    const isAlreadyAMLL = lyricsContainer.querySelector('.amll-lyrics-container');
                     
                     console.log('[AMLL] Lyrics check:', {
                         directLyrics: hasDirectLyrics,
                         nestedLyrics: hasNestedLyrics,
-                        containerHasLyrics: !!containerHasLyrics
+                        containerHasLyrics: !!containerHasLyrics,
+                        isAlreadyAMLL: !!isAlreadyAMLL
                     });
 
-                    if (hasDirectLyrics || hasNestedLyrics || containerHasLyrics) {
+                    // 只在有原生歌词且还未替换时进行替换
+                    if ((hasDirectLyrics || hasNestedLyrics || containerHasLyrics) && !isAlreadyAMLL) {
                         console.log('[AMLL] Original lyrics detected, replacing with AMLL...');
                         replaceLyricsWithAMLL(lyricsContainer);
                         // 一次替换后就停止观察
@@ -133,12 +136,19 @@
 
         console.log('[AMLL] MutationObserver set up, waiting for lyrics to load...');
 
-        // 如果已经有歌词，立即替换
+        // 如果已经有歌词,立即替换
         const existingLyrics = lyricsContainer.querySelector('.lyricsLine');
-        if (existingLyrics) {
+        const alreadyAMLL = lyricsContainer.querySelector('.amll-lyrics-container');
+        
+        if (existingLyrics && !alreadyAMLL) {
             console.log('[AMLL] Lyrics already present, replacing immediately...');
             replaceLyricsWithAMLL(lyricsContainer);
             observer.disconnect();
+            return; // 立即返回,不再继续轮询
+        } else if (alreadyAMLL) {
+            console.log('[AMLL] AMLL lyrics already rendered, skipping...');
+            observer.disconnect();
+            return;
         } else {
             console.log('[AMLL] No lyrics yet, waiting for them to load...');
             
@@ -190,6 +200,46 @@
         return lyrics.length > 0 ? lyrics : null;
     }
 
+    // 获取当前播放歌曲的专辑封面
+    function getCurrentAlbumArt() {
+        try {
+            // 尝试从 OSD (On-Screen Display) 获取
+            const nowPlayingImage = document.querySelector('.nowPlayingImage, .osdPosterImg, [data-type="nowPlayingImage"]');
+            if (nowPlayingImage) {
+                const bgImage = nowPlayingImage.style.backgroundImage || nowPlayingImage.src;
+                if (bgImage) {
+                    // 提取 URL
+                    const urlMatch = bgImage.match(/url\(['"]?([^'"]+)['"]?\)/);
+                    return urlMatch ? urlMatch[1] : bgImage;
+                }
+            }
+
+            // 尝试从播放栏获取
+            const playerImage = document.querySelector('.nowPlayingBarImage, .mediaButton img, .playbackManager img');
+            if (playerImage && playerImage.src) {
+                return playerImage.src;
+            }
+
+            // 尝试从 Jellyfin API 获取当前播放的 item ID
+            const lyricPage = document.querySelector('#lyricPage');
+            if (lyricPage) {
+                const itemIdMatch = lyricPage.getAttribute('data-itemid') || 
+                                   window.location.href.match(/id=([a-f0-9]+)/i);
+                if (itemIdMatch) {
+                    const itemId = typeof itemIdMatch === 'string' ? itemIdMatch : itemIdMatch[1];
+                    // 构造专辑封面 URL
+                    return `${window.location.origin}/Items/${itemId}/Images/Primary?fillHeight=600&fillWidth=600&quality=90`;
+                }
+            }
+
+            console.warn('[AMLL] Could not find album art');
+            return null;
+        } catch (error) {
+            console.warn('[AMLL] Error getting album art:', error);
+            return null;
+        }
+    }
+
     // 替换为 AMLL 渲染
     function replaceLyricsWithAMLL(container) {
         try {
@@ -200,6 +250,10 @@
                 console.warn('[AMLL] No lyrics data found');
                 return;
             }
+
+            // 获取专辑封面
+            const albumArt = getCurrentAlbumArt();
+            console.log('[AMLL] Album art URL:', albumArt);
 
             // 清空容器
             container.innerHTML = '';
@@ -218,25 +272,64 @@
             // 创建背景容器
             const bgContainer = document.createElement('div');
             bgContainer.className = 'amll-background';
-            bgContainer.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                z-index: -1;
-                background: linear-gradient(135deg, rgba(30,30,50,0.95) 0%, rgba(10,10,20,0.98) 100%);
-                backdrop-filter: blur(50px);
-            `;
+            
+            // 如果有专辑封面,使用模糊背景
+            if (albumArt) {
+                bgContainer.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    z-index: 0;
+                    background-image: url('${albumArt}');
+                    background-size: cover;
+                    background-position: center;
+                    filter: blur(60px) brightness(0.6);
+                    transform: scale(1.2);
+                    pointer-events: none;
+                `;
+                
+                // 添加渐变遮罩
+                const gradientOverlay = document.createElement('div');
+                gradientOverlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(to bottom, 
+                        rgba(0,0,0,0.2) 0%, 
+                        rgba(0,0,0,0.4) 50%, 
+                        rgba(0,0,0,0.6) 100%);
+                    pointer-events: none;
+                `;
+                bgContainer.appendChild(gradientOverlay);
+            } else {
+                // 降级为纯色渐变
+                bgContainer.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    z-index: 0;
+                    background: linear-gradient(135deg, rgba(30,30,50,0.95) 0%, rgba(10,10,20,0.98) 100%);
+                    pointer-events: none;
+                `;
+            }
 
             // 创建歌词滚动容器
             const scrollContainer = document.createElement('div');
             scrollContainer.className = 'amll-scroll-container';
             scrollContainer.style.cssText = `
-                max-height: 70vh;
+                position: relative;
+                z-index: 1;
+                height: 100vh;
+                max-height: 100vh;
                 overflow-y: auto;
                 overflow-x: hidden;
-                padding: 40px 20px;
+                padding: 20vh 20px;
                 scroll-behavior: smooth;
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: none;
@@ -266,13 +359,13 @@
                 scrollContainer.appendChild(lyricLine);
             });
 
-            // 添加底部留白
+            // 添加底部留白,确保最后一句歌词能滚动到屏幕中心
             const spacer = document.createElement('div');
-            spacer.style.height = '40vh';
+            spacer.style.height = '50vh';
             scrollContainer.appendChild(spacer);
 
-            // 组装容器
-            document.body.appendChild(bgContainer);
+            // 组装容器 - 背景添加到歌词容器内部
+            amllContainer.appendChild(bgContainer);
             amllContainer.appendChild(scrollContainer);
             container.appendChild(amllContainer);
 
@@ -389,27 +482,47 @@
     function updateActiveLyric(container, index) {
         // 移除所有高亮
         const allLines = container.querySelectorAll('.amll-lyric-line');
-        allLines.forEach(line => line.classList.remove('active'));
+        allLines.forEach(line => {
+            line.classList.remove('active');
+            // 重置非活跃歌词样式
+            line.style.fontSize = '32px';
+            line.style.color = 'rgba(255, 255, 255, 0.4)';
+            line.style.transform = 'scale(1)';
+        });
 
         // 高亮当前行
         const currentLine = container.querySelector(`.amll-lyric-line[data-index="${index}"]`);
         if (currentLine) {
             currentLine.classList.add('active');
+            // 增强活跃歌词样式
+            currentLine.style.fontSize = '48px';
+            currentLine.style.color = 'rgba(255, 255, 255, 1)';
+            currentLine.style.transform = 'scale(1.1)';
+            currentLine.style.fontWeight = '600';
 
-            // 滚动到当前行
-            const lineTop = currentLine.offsetTop;
-            const scrollerHeight = container.clientHeight;
-            const lineHeight = currentLine.clientHeight;
-            const scrollTo = lineTop - (scrollerHeight / 2) + (lineHeight / 2);
-            
-            container.scrollTo({
-                top: scrollTo,
-                behavior: 'smooth'
-            });
+            // 获取滚动容器(不是外层容器)
+            const scrollContainer = container.querySelector('.amll-scroll-container');
+            if (scrollContainer) {
+                // 使用 requestAnimationFrame 确保 DOM 已更新
+                requestAnimationFrame(() => {
+                    // 计算当前歌词相对于滚动容器的位置
+                    const containerRect = scrollContainer.getBoundingClientRect();
+                    const lineRect = currentLine.getBoundingClientRect();
+                    const lineTopRelative = lineRect.top - containerRect.top + scrollContainer.scrollTop;
+                    
+                    // 将歌词滚动到视口垂直中心
+                    const scrollTo = lineTopRelative - (containerRect.height / 2) + (lineRect.height / 2);
+                    
+                    scrollContainer.scrollTo({
+                        top: Math.max(0, scrollTo),
+                        behavior: 'smooth'
+                    });
+                });
+            }
         }
     }
 
-    // 获取当前播放时间（ticks）
+    // 获取当前播放时间(ticks)
     function getCurrentPlayTimeTicks() {
         try {
             // 方法1: 从缓存的 playbackManager 获取
@@ -420,14 +533,14 @@
             if (playbackManagerRef && typeof playbackManagerRef.currentTime === 'function') {
                 const seconds = playbackManagerRef.currentTime();
                 if (seconds !== undefined && !isNaN(seconds)) {
-                    return seconds * 10000; // 转换为 ticks (1 tick = 0.0001 秒)
+                    return Math.floor(seconds * 10000000); // 转换为 ticks (1 tick = 100 纳秒, 1秒 = 10000000 ticks)
                 }
             }
 
-            // 方法2: 从 HTML5 媒体元素获取（最可靠）
+            // 方法2: 从 HTML5 媒体元素获取(最可靠)
             const mediaElement = document.querySelector('audio, video');
             if (mediaElement && !isNaN(mediaElement.currentTime)) {
-                return Math.floor(mediaElement.currentTime * 10000);
+                return Math.floor(mediaElement.currentTime * 10000000);
             }
 
             // 方法3: 从 OSD 时间显示解析
