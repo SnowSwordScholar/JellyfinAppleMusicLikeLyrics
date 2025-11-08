@@ -339,12 +339,12 @@
                     background-image: url('${albumArt}');
                     background-size: cover;
                     background-position: center;
-                    filter: blur(60px) brightness(0.6);
+                    filter: blur(60px) brightness(0.8);
                     transform: scale(1.2);
                     pointer-events: none;
                 `;
                 
-                // 添加渐变遮罩
+                // 添加更亮的渐变遮罩
                 const gradientOverlay = document.createElement('div');
                 gradientOverlay.style.cssText = `
                     position: absolute;
@@ -353,14 +353,14 @@
                     right: 0;
                     bottom: 0;
                     background: linear-gradient(to bottom, 
-                        rgba(0,0,0,0.2) 0%, 
-                        rgba(0,0,0,0.4) 50%, 
-                        rgba(0,0,0,0.6) 100%);
+                        rgba(0,0,0,0.1) 0%, 
+                        rgba(0,0,0,0.3) 50%, 
+                        rgba(0,0,0,0.5) 100%);
                     pointer-events: none;
                 `;
                 bgContainer.appendChild(gradientOverlay);
             } else {
-                // 降级为纯色渐变
+                // 降级为更亮的纯色渐变
                 bgContainer.style.cssText = `
                     position: absolute;
                     top: 0;
@@ -368,7 +368,7 @@
                     right: 0;
                     bottom: 0;
                     z-index: 0;
-                    background: linear-gradient(135deg, rgba(30,30,50,0.95) 0%, rgba(10,10,20,0.98) 100%);
+                    background: linear-gradient(135deg, rgba(40,40,60,0.9) 0%, rgba(20,20,35,0.95) 100%);
                     pointer-events: none;
                 `;
             }
@@ -397,11 +397,17 @@
                 lyricLine.setAttribute('data-time', lyric.Start);
                 lyricLine.setAttribute('data-index', index);
                 lyricLine.textContent = lyric.Text;
+                
+                // 添加点击跳转功能
+                lyricLine.addEventListener('click', () => {
+                    seekToTime(lyric.Start);
+                });
+                
                 lyricLine.style.cssText = `
                     font-size: 32px;
                     color: rgba(255, 255, 255, 0.4);
                     text-align: center;
-                    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+                    text-shadow: 0 1px 6px rgba(0,0,0,0.5);
                     padding: 15px 20px;
                     margin: 8px 0;
                     font-weight: 300;
@@ -458,29 +464,36 @@
                 cursor: pointer;
                 backface-visibility: hidden;
                 will-change: transform, filter, opacity;
+                /* 添加自动换行支持，防止长歌词造成布局跳动 */
+                word-wrap: break-word;
+                word-break: break-word;
+                white-space: pre-wrap;
+                overflow-wrap: break-word;
                 transition: 
-                    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
                     filter 0.3s ease,
                     opacity 0.3s ease,
                     background-color 0.25s ease,
-                    box-shadow 0.25s ease;
+                    box-shadow 0.25s ease,
+                    font-size 0.3s ease;
             }
 
-            /* 活动歌词行 - Apple Music 风格 */
+            /* 活动歌词行 - Apple Music 风格 (优化后) */
             .amll-lyric-line.active {
                 color: rgba(255, 255, 255, 1) !important;
                 font-weight: 600 !important;
                 transform: scale(1.08);
+                /* 减轻阴影效果 */
                 text-shadow: 
-                    0 0 30px rgba(255, 255, 255, 0.4),
-                    0 2px 8px rgba(0, 0, 0, 0.3);
-                filter: blur(0px) brightness(1.2);
+                    0 0 20px rgba(255, 255, 255, 0.2),
+                    0 1px 4px rgba(0, 0, 0, 0.15);
+                filter: blur(0px) brightness(1.15);
             }
 
-            /* 非活动歌词行 - 模糊效果 */
+            /* 非活动歌词行 - 模糊效果 (提亮背景) */
             .amll-lyric-line:not(.active) {
-                filter: blur(0.5px) brightness(0.7);
-                opacity: 0.5;
+                filter: blur(0.5px) brightness(0.85);
+                opacity: 0.65;
             }
 
             /* Hover 效果 - Apple Music 风格 */
@@ -615,20 +628,20 @@
     }
 
     // 平滑滚动函数 - 使用 cubic-bezier 缓动
-    function smoothScrollTo(element, targetScrollTop, duration = 600) {
+    function smoothScrollTo(element, targetScrollTop, duration = 1000) {
         const startScrollTop = element.scrollTop;
         const distance = targetScrollTop - startScrollTop;
         const startTime = performance.now();
         
-        // Apple Music 风格的缓动函数: cubic-bezier(0.16, 1, 0.3, 1)
-        function easeOutExpo(t) {
-            return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+        // 更柔和的缓动函数: cubic-bezier(0.25, 0.46, 0.45, 0.94)
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
         }
         
         function animation(currentTime) {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            const easeProgress = easeOutExpo(progress);
+            const easeProgress = easeOutCubic(progress);
             
             element.scrollTop = startScrollTop + (distance * easeProgress);
             
@@ -685,6 +698,38 @@
                 // 使用更平滑的自定义滚动动画
                 smoothScrollTo(scrollContainer, Math.max(0, scrollTo), 600);
             });
+        }
+    }
+
+    // 跳转到指定时间
+    function seekToTime(ticks) {
+        try {
+            console.log('[AMLL] Seeking to time:', ticks, 'ticks (', (ticks / 10000000).toFixed(2), 's)');
+            
+            // 方法1: 使用 playbackManager
+            if (!playbackManagerRef) {
+                playbackManagerRef = tryGetPlaybackManager();
+            }
+            
+            if (playbackManagerRef && typeof playbackManagerRef.seek === 'function') {
+                const positionTicks = ticks;
+                playbackManagerRef.seek(positionTicks);
+                console.log('[AMLL] Seeked via playbackManager');
+                return;
+            }
+            
+            // 方法2: 直接操作 HTML5 媒体元素
+            const mediaElement = document.querySelector('audio, video');
+            if (mediaElement) {
+                const seconds = ticks / 10000000;
+                mediaElement.currentTime = seconds;
+                console.log('[AMLL] Seeked via media element to', seconds, 's');
+                return;
+            }
+            
+            console.warn('[AMLL] Unable to seek: no playback manager or media element found');
+        } catch (error) {
+            console.error('[AMLL] Error seeking:', error);
         }
     }
 
