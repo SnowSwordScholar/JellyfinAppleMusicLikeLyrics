@@ -89,6 +89,9 @@
 
         console.log('[AMLL] Intercepting lyrics container:', lyricsContainer);
 
+        // 轮询定时器的引用(在外部声明,以便在 MutationObserver 中访问)
+        let pollInterval = null;
+
         // 使用 MutationObserver 监听原生歌词加载
         const observer = new MutationObserver((mutations) => {
             console.log('[AMLL] Mutation detected, checking for lyrics...');
@@ -121,9 +124,15 @@
                     // 只在有原生歌词且还未替换时进行替换
                     if ((hasDirectLyrics || hasNestedLyrics || containerHasLyrics) && !isAlreadyAMLL) {
                         console.log('[AMLL] Original lyrics detected, replacing with AMLL...');
-                        replaceLyricsWithAMLL(lyricsContainer);
-                        // 一次替换后就停止观察
+                        // 停止轮询
+                        if (pollInterval) {
+                            clearInterval(pollInterval);
+                            console.log('[AMLL] Polling stopped by MutationObserver');
+                        }
+                        // 停止观察
                         observer.disconnect();
+                        // 替换歌词
+                        replaceLyricsWithAMLL(lyricsContainer);
                         break;
                     }
                 }
@@ -171,21 +180,20 @@
             // 添加轮询作为备用方案 - 每100ms检查一次是否有歌词
             let pollCount = 0;
             const maxPolls = 100; // 最多轮询10秒
-            const pollInterval = setInterval(() => {
+            pollInterval = setInterval(() => {
                 pollCount++;
                 const lyrics = lyricsContainer.querySelector('.lyricsLine');
                 
                 if (lyrics) {
                     console.log(`[AMLL] Lyrics detected via polling after ${pollCount * 100}ms!`);
-                    replaceLyricsWithAMLL(lyricsContainer);
+                    clearInterval(pollInterval);
                     observer.disconnect();
-                    clearInterval(pollInterval);
+                    replaceLyricsWithAMLL(lyricsContainer);
                     // 不重置 isIntercepting,保持拦截状态直到离开页面
-                    clearInterval(pollInterval);
                 } else if (pollCount >= maxPolls) {
                     console.warn('[AMLL] Polling timeout - no lyrics found after 10 seconds');
-                    isIntercepting = false; // 重置标志以允许下次尝试
                     clearInterval(pollInterval);
+                    isIntercepting = false; // 重置标志以允许下次尝试
                 } else if (pollCount % 10 === 0) {
                     console.log(`[AMLL] Still polling for lyrics... (${pollCount}/${maxPolls})`);
                 }
@@ -505,9 +513,9 @@
     }
 
     // 更新活跃歌词
-    function updateActiveLyric(container, index) {
+    function updateActiveLyric(scrollContainer, index) {
         // 移除所有高亮
-        const allLines = container.querySelectorAll('.amll-lyric-line');
+        const allLines = scrollContainer.querySelectorAll('.amll-lyric-line');
         allLines.forEach(line => {
             line.classList.remove('active');
             // 重置非活跃歌词样式
@@ -517,7 +525,7 @@
         });
 
         // 高亮当前行
-        const currentLine = container.querySelector(`.amll-lyric-line[data-index="${index}"]`);
+        const currentLine = scrollContainer.querySelector(`.amll-lyric-line[data-index="${index}"]`);
         if (currentLine) {
             currentLine.classList.add('active');
             // 增强活跃歌词样式
@@ -526,25 +534,28 @@
             currentLine.style.transform = 'scale(1.1)';
             currentLine.style.fontWeight = '600';
 
-            // 获取滚动容器(不是外层容器)
-            const scrollContainer = container.querySelector('.amll-scroll-container');
-            if (scrollContainer) {
-                // 使用 requestAnimationFrame 确保 DOM 已更新
-                requestAnimationFrame(() => {
-                    // 计算当前歌词相对于滚动容器的位置
-                    const containerRect = scrollContainer.getBoundingClientRect();
-                    const lineRect = currentLine.getBoundingClientRect();
-                    const lineTopRelative = lineRect.top - containerRect.top + scrollContainer.scrollTop;
-                    
-                    // 将歌词滚动到视口垂直中心
-                    const scrollTo = lineTopRelative - (containerRect.height / 2) + (lineRect.height / 2);
-                    
-                    scrollContainer.scrollTo({
-                        top: Math.max(0, scrollTo),
-                        behavior: 'smooth'
-                    });
+            // 使用 requestAnimationFrame 确保 DOM 已更新
+            requestAnimationFrame(() => {
+                // 计算当前歌词相对于滚动容器的位置
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const lineRect = currentLine.getBoundingClientRect();
+                const lineTopRelative = lineRect.top - containerRect.top + scrollContainer.scrollTop;
+                
+                // 将歌词滚动到视口垂直中心
+                const scrollTo = lineTopRelative - (containerRect.height / 2) + (lineRect.height / 2);
+                
+                console.log('[AMLL] Scroll:', {
+                    lineTop: lineTopRelative,
+                    scrollTo: scrollTo,
+                    containerHeight: containerRect.height,
+                    currentScrollTop: scrollContainer.scrollTop
                 });
-            }
+                
+                scrollContainer.scrollTo({
+                    top: Math.max(0, scrollTo),
+                    behavior: 'smooth'
+                });
+            });
         }
     }
 
