@@ -6,7 +6,7 @@
 (function() {
     'use strict';
 
-    // ========== 配置对象 ==========
+    // ========== 配置对象（默认值必须与 PluginConfiguration.cs 一致）==========
     let AMLL_CONFIG = {
         // 基础设置
         IsEnabled: true,
@@ -25,14 +25,14 @@
         // 非活跃歌词设置
         InactiveBrightness: 0.85,
         InactiveOpacity: 0.65,
-        InactiveShadowIntensity: 0.5,
+        InactiveShadowIntensity: 0.0,  // ✅ 修改：从 0.5 改为 0.0（与 C# 一致）
         InactiveBlur: 0.5,
         
         // 活跃歌词设置
         ActiveBrightness: 1.15,
-        ActiveOpacity: 1.0,
-        ActiveGlowIntensity: 0.2,
-        ActiveShadowIntensity: 0.15,
+        ActiveOpacity: 0.9,  // ✅ 修改：从 1.0 改为 0.9（与 C# 一致）
+        ActiveGlowIntensity: 0.35,  // ✅ 修改：从 0.2 改为 0.35（与 C# 一致）
+        ActiveShadowIntensity: 0.0,  // ✅ 修改：从 0.15 改为 0.0（与 C# 一致）
         ActiveBlur: 0.0,
         
         // 渐变模糊设置
@@ -42,8 +42,8 @@
         // 动画设置
         ScrollDuration: 1000,
         SpringSpeed: 1.0,
-        TransformDuration: 800,
-        ScrollPositionLandscape: 0.35,
+        TransformDuration: 300,  // ✅ 修改：从 800 改为 300（与 C# 一致）
+        ScrollPositionLandscape: 0.30,  // ✅ 修改：从 0.35 改为 0.30（与 C# 一致）
         ScrollPositionPortrait: 0.35
     };
     
