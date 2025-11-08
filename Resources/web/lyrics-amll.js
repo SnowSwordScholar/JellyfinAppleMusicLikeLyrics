@@ -8,36 +8,47 @@
 
     console.log('[AMLL] Lyrics interceptor loaded');
 
-    // 等待 Jellyfin 的核心模块加载
-    function waitForJellyfinModules() {
-        return new Promise((resolve) => {
-            const checkInterval = setInterval(() => {
-                // 检查必要的 Jellyfin 模块是否已加载
-                if (window.playbackManager && window.ApiClient) {
-                    clearInterval(checkInterval);
-                    console.log('[AMLL] Jellyfin modules ready');
-                    resolve();
-                }
-            }, 100);
+    // 播放管理器引用（从页面事件中获取）
+    let playbackManagerRef = null;
+    let isIntercepting = false; // 防止重复拦截标志
+    let interceptionAttempts = 0; // 拦截尝试计数
 
-            // 10秒超时
-            setTimeout(() => {
-                clearInterval(checkInterval);
-                console.warn('[AMLL] Timeout waiting for Jellyfin modules');
-                resolve();
-            }, 10000);
-        });
+    // 尝试从全局获取 playbackManager
+    function tryGetPlaybackManager() {
+        // Jellyfin 可能将 playbackManager 暴露在不同的位置
+        if (typeof playbackManager !== 'undefined') {
+            return playbackManager;
+        }
+        if (window.playbackManager) {
+            return window.playbackManager;
+        }
+        // 尝试从 Emby 兼容层获取
+        if (window.require && window.require.defined && window.require.defined('playbackManager')) {
+            return window.require('playbackManager');
+        }
+        return null;
     }
 
     // 等待歌词页面出现
     function waitForLyricsPage() {
         return new Promise((resolve) => {
+            let attempts = 0;
             const checkInterval = setInterval(() => {
+                attempts++;
                 const lyricPage = document.querySelector('#lyricPage');
                 if (lyricPage) {
                     clearInterval(checkInterval);
-                    console.log('[AMLL] Lyrics page found');
+                    console.log('[AMLL] Lyrics page found after', attempts, 'attempts');
                     resolve(lyricPage);
+                } else if (attempts % 10 === 0) {
+                    console.log('[AMLL] Still waiting for lyrics page... (' + attempts + ' attempts)');
+                }
+                
+                // 30秒超时
+                if (attempts > 300) {
+                    clearInterval(checkInterval);
+                    console.error('[AMLL] Timeout waiting for lyrics page');
+                    resolve(null);
                 }
             }, 100);
         });
@@ -45,26 +56,65 @@
 
     // 拦截原生歌词渲染
     async function interceptLyricsRendering() {
+        // 防止重复拦截
+        if (isIntercepting) {
+            interceptionAttempts++;
+            if (interceptionAttempts % 10 === 0) {
+                console.log(`[AMLL] Already intercepting, ignoring duplicate call (#${interceptionAttempts})`);
+            }
+            return;
+        }
+        
+        isIntercepting = true;
+        interceptionAttempts++;
+        console.log(`[AMLL] Starting interception (attempt #${interceptionAttempts})...`);
+        
         const lyricPage = await waitForLyricsPage();
+        
+        if (!lyricPage) {
+            console.error('[AMLL] Lyrics page not found, aborting');
+            isIntercepting = false;
+            return;
+        }
+        
         const lyricsContainer = lyricPage.querySelector('.lyricsContainer');
 
         if (!lyricsContainer) {
-            console.error('[AMLL] Lyrics container not found');
+            console.error('[AMLL] Lyrics container not found in page');
+            isIntercepting = false;
             return;
         }
 
-        console.log('[AMLL] Intercepting lyrics container');
+        console.log('[AMLL] Intercepting lyrics container:', lyricsContainer);
 
         // 使用 MutationObserver 监听原生歌词加载
         const observer = new MutationObserver((mutations) => {
+            console.log('[AMLL] Mutation detected, checking for lyrics...');
+            
             for (const mutation of mutations) {
                 if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                    // 检查是否是歌词内容
-                    const hasLyrics = Array.from(mutation.addedNodes).some(node => 
+                    console.log(`[AMLL] ${mutation.addedNodes.length} nodes added to lyrics container`);
+                    
+                    // 检查添加的节点本身是否是歌词
+                    const hasDirectLyrics = Array.from(mutation.addedNodes).some(node => 
                         node.classList && node.classList.contains('lyricsLine')
                     );
+                    
+                    // 检查添加的节点内部是否包含歌词
+                    const hasNestedLyrics = Array.from(mutation.addedNodes).some(node => 
+                        node.querySelector && node.querySelector('.lyricsLine')
+                    );
 
-                    if (hasLyrics || lyricsContainer.querySelector('.lyricsLine')) {
+                    // 检查整个容器是否现在有歌词
+                    const containerHasLyrics = lyricsContainer.querySelector('.lyricsLine');
+                    
+                    console.log('[AMLL] Lyrics check:', {
+                        directLyrics: hasDirectLyrics,
+                        nestedLyrics: hasNestedLyrics,
+                        containerHasLyrics: !!containerHasLyrics
+                    });
+
+                    if (hasDirectLyrics || hasNestedLyrics || containerHasLyrics) {
                         console.log('[AMLL] Original lyrics detected, replacing with AMLL...');
                         replaceLyricsWithAMLL(lyricsContainer);
                         // 一次替换后就停止观察
@@ -81,11 +131,40 @@
             subtree: true
         });
 
+        console.log('[AMLL] MutationObserver set up, waiting for lyrics to load...');
+
         // 如果已经有歌词，立即替换
-        if (lyricsContainer.querySelector('.lyricsLine')) {
-            console.log('[AMLL] Lyrics already present, replacing...');
+        const existingLyrics = lyricsContainer.querySelector('.lyricsLine');
+        if (existingLyrics) {
+            console.log('[AMLL] Lyrics already present, replacing immediately...');
             replaceLyricsWithAMLL(lyricsContainer);
             observer.disconnect();
+        } else {
+            console.log('[AMLL] No lyrics yet, waiting for them to load...');
+            
+            // 添加轮询作为备用方案 - 每100ms检查一次是否有歌词
+            let pollCount = 0;
+            const maxPolls = 100; // 最多轮询10秒
+            const pollInterval = setInterval(() => {
+                pollCount++;
+                const lyrics = lyricsContainer.querySelector('.lyricsLine');
+                
+                if (lyrics) {
+                    console.log(`[AMLL] Lyrics detected via polling after ${pollCount * 100}ms!`);
+                    replaceLyricsWithAMLL(lyricsContainer);
+                    observer.disconnect();
+                    clearInterval(pollInterval);
+                    // 不重置 isIntercepting,保持拦截状态直到离开页面
+                } else if (pollCount >= maxPolls) {
+                    console.warn('[AMLL] Polling timeout - no lyrics found after 10 seconds');
+                    console.log('[AMLL] Container content:', lyricsContainer.innerHTML);
+                    console.log('[AMLL] Container has lyrics elements:', lyricsContainer.querySelectorAll('.lyricsLine').length);
+                    isIntercepting = false; // 重置标志以允许下次尝试
+                    clearInterval(pollInterval);
+                } else if (pollCount % 10 === 0) {
+                    console.log(`[AMLL] Still polling for lyrics... (${pollCount}/${maxPolls})`);
+                }
+            }, 100);
         }
     }
 
@@ -246,11 +325,19 @@
     function startLyricsSync(container, lyrics) {
         let currentIndex = -1;
         let syncInterval;
+        let debugCounter = 0;
 
         function updateLyrics() {
             try {
                 // 获取当前播放时间（ticks）
                 const currentTime = getCurrentPlayTimeTicks();
+                
+                // 每5秒输出一次调试信息
+                debugCounter++;
+                if (debugCounter % 50 === 0) {
+                    console.log('[AMLL] Sync check: currentTime =', currentTime, 'ticks (', (currentTime / 10000).toFixed(2), 's), currentIndex =', currentIndex);
+                }
+                
                 if (currentTime === null) return;
 
                 // 找到当前应该显示的歌词
@@ -265,6 +352,7 @@
                 // 更新高亮
                 if (newIndex !== currentIndex && newIndex >= 0) {
                     currentIndex = newIndex;
+                    console.log('[AMLL] Switching to lyric line', newIndex, ':', lyrics[newIndex].Text);
                     updateActiveLyric(container, currentIndex);
                 }
             } catch (error) {
@@ -324,18 +412,34 @@
     // 获取当前播放时间（ticks）
     function getCurrentPlayTimeTicks() {
         try {
-            // 方法1: 使用 Jellyfin playbackManager
-            if (window.playbackManager && window.playbackManager.currentTime) {
-                const seconds = window.playbackManager.currentTime();
+            // 方法1: 从缓存的 playbackManager 获取
+            if (!playbackManagerRef) {
+                playbackManagerRef = tryGetPlaybackManager();
+            }
+            
+            if (playbackManagerRef && typeof playbackManagerRef.currentTime === 'function') {
+                const seconds = playbackManagerRef.currentTime();
                 if (seconds !== undefined && !isNaN(seconds)) {
-                    return seconds * 10000; // 转换为 ticks
+                    return seconds * 10000; // 转换为 ticks (1 tick = 0.0001 秒)
                 }
             }
 
-            // 方法2: 从 HTML5 媒体元素获取
+            // 方法2: 从 HTML5 媒体元素获取（最可靠）
             const mediaElement = document.querySelector('audio, video');
             if (mediaElement && !isNaN(mediaElement.currentTime)) {
-                return mediaElement.currentTime * 10000;
+                return Math.floor(mediaElement.currentTime * 10000);
+            }
+
+            // 方法3: 从 OSD 时间显示解析
+            const osdTime = document.querySelector('.osdTimeText, .positionTime');
+            if (osdTime) {
+                const text = osdTime.textContent.trim();
+                const match = text.match(/(\d+):(\d+)/);
+                if (match) {
+                    const minutes = parseInt(match[1], 10);
+                    const seconds = parseInt(match[2], 10);
+                    return (minutes * 60 + seconds) * 10000;
+                }
             }
 
             return null;
@@ -346,24 +450,97 @@
     }
 
     // 初始化
-    async function init() {
+    function init() {
         console.log('[AMLL] Initializing...');
+        console.log('[AMLL] Current URL:', window.location.href);
+        console.log('[AMLL] Current hash:', window.location.hash);
         
-        // 等待 Jellyfin 模块
-        await waitForJellyfinModules();
+        // 尝试获取 playbackManager
+        playbackManagerRef = tryGetPlaybackManager();
+        if (playbackManagerRef) {
+            console.log('[AMLL] PlaybackManager found');
+        } else {
+            console.log('[AMLL] PlaybackManager not found, will use HTML5 media element');
+        }
         
-        // 监听路由变化，当进入歌词页面时拦截
-        const checkAndIntercept = () => {
-            if (window.location.hash.includes('/lyrics')) {
+        // 检查是否进入歌词页面
+        const checkForLyricsPage = () => {
+            const currentHash = window.location.hash;
+            
+            // 检查 hash
+            if (currentHash.includes('/lyrics')) {
+                console.log('[AMLL] Lyrics route detected via hash:', currentHash);
                 interceptLyricsRendering();
+                return true;
             }
+            
+            // 检查 DOM 是否存在歌词页面
+            const lyricPage = document.querySelector('#lyricPage');
+            if (lyricPage) {
+                console.log('[AMLL] Lyrics page detected via DOM!');
+                interceptLyricsRendering();
+                return true;
+            }
+            
+            return false;
         };
 
         // 立即检查
-        checkAndIntercept();
+        if (!checkForLyricsPage()) {
+            console.log('[AMLL] Not on lyrics page, setting up watchers...');
+        }
 
-        // 监听路由变化
-        window.addEventListener('hashchange', checkAndIntercept);
+        // 方法1: 监听 hashchange
+        window.addEventListener('hashchange', (e) => {
+            console.log('[AMLL] Hash changed from', e.oldURL, 'to', e.newURL);
+            
+            // 如果离开歌词页面,重置拦截标志
+            if (!e.newURL.includes('/lyrics')) {
+                console.log('[AMLL] Left lyrics page, resetting interception flag');
+                isIntercepting = false;
+                interceptionAttempts = 0;
+            }
+            
+            checkForLyricsPage();
+        });
+        
+        // 方法2: 使用 MutationObserver 监听 DOM 变化（Jellyfin 使用 SPA 架构）
+        const observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                if (mutation.type === 'childList') {
+                    // 检查是否添加了歌词页面
+                    for (const node of mutation.addedNodes) {
+                        if (node.id === 'lyricPage' || (node.querySelector && node.querySelector('#lyricPage'))) {
+                            console.log('[AMLL] Lyrics page detected via MutationObserver!');
+                            checkForLyricsPage();
+                            return;
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 观察 body 的子元素变化
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        
+        // 方法3: 定期检查（备用）
+        const checkInterval = setInterval(() => {
+            if (checkForLyricsPage()) {
+                // 找到后可以停止定期检查，MutationObserver 会继续工作
+                console.log('[AMLL] Periodic check found lyrics page');
+            }
+        }, 1000);
+        
+        // 60秒后停止定期检查（但 MutationObserver 继续工作）
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            console.log('[AMLL] Periodic check stopped, MutationObserver still active');
+        }, 60000);
+        
+        console.log('[AMLL] All watchers registered (hashchange + MutationObserver + periodic)');
     }
 
     // 启动
