@@ -14,6 +14,7 @@
     let interceptionAttempts = 0; // 拦截尝试计数
     let currentSyncInterval = null; // 当前的同步定时器
     let currentHashChangeHandler = null; // 当前的hash变化监听器
+    let lastInterceptedContainer = null; // 记录上次拦截的容器,用于检测容器变化
 
     // 尝试从全局获取 playbackManager
     function tryGetPlaybackManager() {
@@ -58,16 +59,6 @@
 
     // 拦截原生歌词渲染
     async function interceptLyricsRendering() {
-        // 防止重复拦截
-        if (isIntercepting) {
-            interceptionAttempts++;
-            if (interceptionAttempts % 10 === 0) {
-                console.log(`[AMLL] Already intercepting, ignoring duplicate call (#${interceptionAttempts})`);
-            }
-            return;
-        }
-        
-        isIntercepting = true;
         interceptionAttempts++;
         console.log(`[AMLL] Starting interception (attempt #${interceptionAttempts})...`);
         
@@ -87,6 +78,23 @@
             return;
         }
 
+        // 检测容器是否变化(切换歌曲/重新进入会创建新容器)
+        if (lastInterceptedContainer && lastInterceptedContainer !== lyricsContainer) {
+            console.log('[AMLL] Detected new lyrics container (song changed), resetting interception');
+            isIntercepting = false;
+            lastInterceptedContainer = null;
+        }
+
+        // 防止重复拦截同一个容器
+        if (isIntercepting && lastInterceptedContainer === lyricsContainer) {
+            if (interceptionAttempts % 10 === 0) {
+                console.log(`[AMLL] Already intercepting same container, ignoring (#${interceptionAttempts})`);
+            }
+            return;
+        }
+        
+        isIntercepting = true;
+        lastInterceptedContainer = lyricsContainer;
         console.log('[AMLL] Intercepting lyrics container:', lyricsContainer);
 
         // 轮询定时器的引用(在外部声明,以便在 MutationObserver 中访问)
@@ -541,12 +549,15 @@
                 const lineRect = currentLine.getBoundingClientRect();
                 const lineTopRelative = lineRect.top - containerRect.top + scrollContainer.scrollTop;
                 
-                // 将歌词滚动到视口垂直中心
-                const scrollTo = lineTopRelative - (containerRect.height / 2) + (lineRect.height / 2);
+                // 将歌词滚动到屏幕上方35%的位置 (AMLL默认)
+                // containerRect.height * 0.35 = 从顶部35%的位置
+                const targetPosition = containerRect.height * 0.35;
+                const scrollTo = lineTopRelative - targetPosition + (lineRect.height / 2);
                 
                 console.log('[AMLL] Scroll:', {
                     lineTop: lineTopRelative,
                     scrollTo: scrollTo,
+                    targetPosition: targetPosition,
                     containerHeight: containerRect.height,
                     currentScrollTop: scrollContainer.scrollTop
                 });
@@ -649,6 +660,7 @@
                 console.log('[AMLL] Left lyrics page, resetting interception flag');
                 isIntercepting = false;
                 interceptionAttempts = 0;
+                lastInterceptedContainer = null;
             }
             
             checkForLyricsPage();
