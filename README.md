@@ -51,7 +51,49 @@
 ## 📸 演示
 
 推荐同时安装主题：https://github.com/alexyle/jellyfin-theme ，这样上下栏将会有透明的高斯玻璃效果。在下面的演示中，双方都安装了此主题
-> _TODO: 在其他调试完毕后更新演示
+
+### PC 端效果对比
+
+<table>
+<tr>
+<td width="50%" align="center"><b>Before (原版)</b></td>
+<td width="50%" align="center"><b>After (Apple Music 风格)</b></td>
+</tr>
+<tr>
+<td><img src="assets/Befor_PC.png" alt="PC端原版效果"/></td>
+<td><img src="assets/After_PC.png" alt="PC端Apple Music风格效果"/></td>
+</tr>
+</table>
+
+### 移动端效果对比
+
+<table>
+<tr>
+<td width="50%" align="center"><b>Before (原版)</b></td>
+<td width="50%" align="center"><b>After (Apple Music 风格)</b></td>
+</tr>
+<tr>
+<td><img src="assets/Before_moble.png" alt="移动端原版效果" width="150"/></td>
+<td><img src="assets/After_moble.png" alt="移动端Apple Music风格效果" width="150"/></td>
+</tr>
+</table>
+
+### 视频演示
+
+<details>
+<summary><b>🎥 点击展开查看视频演示</b></summary>
+
+<br/>
+
+**PC 端效果**
+
+https://github.com/user-attachments/assets/MV_PC.mp4
+
+**移动端效果**
+
+https://github.com/user-attachments/assets/MV_moble.mp4
+
+</details>
 
 ## 🔧 系统要求
 
