@@ -141,7 +141,7 @@
                         
                         <div class="inputContainer">
                             <label class="inputLabel" for="InactiveShadowIntensity">
-                                阴影强度 / Shadow Intensity: <span id="InactiveShadowIntensityValue" class="rangeValue">0.5</span>
+                                阴影强度 / Shadow Intensity: <span id="InactiveShadowIntensityValue" class="rangeValue">0.0</span>
                             </label>
                             <input id="InactiveShadowIntensity" type="range" is="emby-input" min="0" max="1" step="0.01" />
                             <div class="fieldDescription">非活跃歌词的阴影强度 / Shadow intensity of inactive lyrics</div>
@@ -170,7 +170,7 @@
                         
                         <div class="inputContainer">
                             <label class="inputLabel" for="ActiveOpacity">
-                                透明度 / Opacity: <span id="ActiveOpacityValue" class="rangeValue">1.0</span>
+                                透明度 / Opacity: <span id="ActiveOpacityValue" class="rangeValue">0.9</span>
                             </label>
                             <input id="ActiveOpacity" type="range" is="emby-input" min="0" max="1" step="0.05" />
                             <div class="fieldDescription">活跃歌词的透明度 / Opacity of active lyric</div>
@@ -178,7 +178,7 @@
                         
                         <div class="inputContainer">
                             <label class="inputLabel" for="ActiveGlowIntensity">
-                                发光强度 / Glow Intensity: <span id="ActiveGlowIntensityValue" class="rangeValue">0.2</span>
+                                发光强度 / Glow Intensity: <span id="ActiveGlowIntensityValue" class="rangeValue">0.35</span>
                             </label>
                             <input id="ActiveGlowIntensity" type="range" is="emby-input" min="0" max="1" step="0.05" />
                             <div class="fieldDescription">活跃歌词的发光效果强度 / Glow effect intensity for active lyric</div>
@@ -186,7 +186,7 @@
                         
                         <div class="inputContainer">
                             <label class="inputLabel" for="ActiveShadowIntensity">
-                                阴影强度 / Shadow Intensity: <span id="ActiveShadowIntensityValue" class="rangeValue">0.15</span>
+                                阴影强度 / Shadow Intensity: <span id="ActiveShadowIntensityValue" class="rangeValue">0.0</span>
                             </label>
                             <input id="ActiveShadowIntensity" type="range" is="emby-input" min="0" max="1" step="0.01" />
                             <div class="fieldDescription">活跃歌词的阴影强度 / Shadow intensity of active lyric</div>
@@ -244,7 +244,7 @@
                         
                         <div class="inputContainer">
                             <label class="inputLabel" for="TransformDuration">
-                                变换时长 / Transform Duration (ms): <span id="TransformDurationValue" class="rangeValue">800</span>
+                                变换时长 / Transform Duration (ms): <span id="TransformDurationValue" class="rangeValue">300</span>
                             </label>
                             <input id="TransformDuration" type="range" is="emby-input" min="200" max="2000" step="100" />
                             <div class="fieldDescription">歌词缩放/透明度变换的时长 / Duration for lyric transform/opacity transitions</div>
@@ -252,7 +252,7 @@
                         
                         <div class="inputContainer">
                             <label class="inputLabel" for="ScrollPositionLandscape">
-                                横屏活跃歌词位置 / Landscape Position (%): <span id="ScrollPositionLandscapeValue" class="rangeValue">35</span>
+                                横屏活跃歌词位置 / Landscape Position (%): <span id="ScrollPositionLandscapeValue" class="rangeValue">30</span>
                             </label>
                             <input id="ScrollPositionLandscape" type="range" is="emby-input" min="0" max="100" step="1" />
                             <div class="fieldDescription">桌面/横屏设备活跃歌词在屏幕中的位置 (0=顶部, 100=底部) / Active lyric position on desktop (0=top, 100=bottom)</div>
@@ -346,7 +346,7 @@
                         // 非活跃歌词设置
                         var inactiveBrightness = config.InactiveBrightness !== undefined ? config.InactiveBrightness : 0.85;
                         var inactiveOpacity = config.InactiveOpacity !== undefined ? config.InactiveOpacity : 0.65;
-                        var inactiveShadow = config.InactiveShadowIntensity !== undefined ? config.InactiveShadowIntensity : 0.5;
+                        var inactiveShadow = config.InactiveShadowIntensity !== undefined ? config.InactiveShadowIntensity : 0.0;
                         var inactiveBlur = config.InactiveBlur !== undefined ? config.InactiveBlur : 0.5;
                         document.querySelector('#InactiveBrightness').value = inactiveBrightness;
                         document.querySelector('#InactiveOpacity').value = inactiveOpacity;
@@ -359,9 +359,9 @@
 
                         // 活跃歌词设置
                         var activeBrightness = config.ActiveBrightness !== undefined ? config.ActiveBrightness : 1.15;
-                        var activeOpacity = config.ActiveOpacity !== undefined ? config.ActiveOpacity : 1.0;
-                        var activeGlow = config.ActiveGlowIntensity !== undefined ? config.ActiveGlowIntensity : 0.2;
-                        var activeShadow = config.ActiveShadowIntensity !== undefined ? config.ActiveShadowIntensity : 0.15;
+                        var activeOpacity = config.ActiveOpacity !== undefined ? config.ActiveOpacity : 0.9;
+                        var activeGlow = config.ActiveGlowIntensity !== undefined ? config.ActiveGlowIntensity : 0.35;
+                        var activeShadow = config.ActiveShadowIntensity !== undefined ? config.ActiveShadowIntensity : 0.0;
                         var activeBlur = config.ActiveBlur !== undefined ? config.ActiveBlur : 0.0;
                         document.querySelector('#ActiveBrightness').value = activeBrightness;
                         document.querySelector('#ActiveOpacity').value = activeOpacity;
@@ -383,8 +383,8 @@
                         // 动画设置
                         var scrollDuration = config.ScrollDuration !== undefined ? config.ScrollDuration : 1000;
                         var springSpeed = config.SpringSpeed !== undefined ? config.SpringSpeed : 1.0;
-                        var transformDuration = config.TransformDuration !== undefined ? config.TransformDuration : 800;
-                        var scrollPosLandscape = config.ScrollPositionLandscape !== undefined ? (config.ScrollPositionLandscape * 100) : 35;
+                        var transformDuration = config.TransformDuration !== undefined ? config.TransformDuration : 300;
+                        var scrollPosLandscape = config.ScrollPositionLandscape !== undefined ? (config.ScrollPositionLandscape * 100) : 30;
                         var scrollPosPortrait = config.ScrollPositionPortrait !== undefined ? (config.ScrollPositionPortrait * 100) : 35;
                         document.querySelector('#ScrollDuration').value = scrollDuration;
                         document.querySelector('#SpringSpeed').value = springSpeed;
@@ -483,14 +483,14 @@
                         // 非活跃歌词设置
                         config.InactiveBrightness = 0.85;
                         config.InactiveOpacity = 0.65;
-                        config.InactiveShadowIntensity = 0.5;
+                        config.InactiveShadowIntensity = 0.0;  // ✅ 修正：从 0.5 改为 0.0
                         config.InactiveBlur = 0.5;
 
                         // 活跃歌词设置
                         config.ActiveBrightness = 1.15;
-                        config.ActiveOpacity = 1.0;
-                        config.ActiveGlowIntensity = 0.2;
-                        config.ActiveShadowIntensity = 0.15;
+                        config.ActiveOpacity = 0.9;  // ✅ 修正：从 1.0 改为 0.9
+                        config.ActiveGlowIntensity = 0.35;  // ✅ 修正：从 0.2 改为 0.35
+                        config.ActiveShadowIntensity = 0.0;  // ✅ 修正：从 0.15 改为 0.0
                         config.ActiveBlur = 0.0;
 
                         // 渐变模糊设置
@@ -500,8 +500,8 @@
                         // 动画设置
                         config.ScrollDuration = 1000;
                         config.SpringSpeed = 1.0;
-                        config.TransformDuration = 800;
-                        config.ScrollPositionLandscape = 0.35;
+                        config.TransformDuration = 300;  // ✅ 修正：从 800 改为 300
+                        config.ScrollPositionLandscape = 0.30;  // ✅ 修正：从 0.35 改为 0.30
                         config.ScrollPositionPortrait = 0.35;
                         
                         ApiClient.updatePluginConfiguration(AppleLyricsConfig.pluginUniqueId, config).then(function (result) {
