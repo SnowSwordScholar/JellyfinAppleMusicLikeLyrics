@@ -87,11 +87,11 @@
 
 **PC 端效果**
 
-https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/raw/refs/heads/main/assets/MV_PC.mp4
+<video src="https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/raw/refs/heads/main/assets/MV_PC.mp4" controls width="100%"></video>
 
 **移动端效果**
 
-https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/raw/refs/heads/main/assets/MV_moble.mp4
+<video src="https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/raw/refs/heads/main/assets/MV_moble.mp4" controls width="100%"></video>
 
 </details>
 
