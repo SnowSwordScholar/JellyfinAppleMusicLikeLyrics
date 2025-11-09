@@ -16,7 +16,7 @@
 
 为 Jellyfin 网页客户端带来 **Apple Music 风格的歌词显示体验**。
 
-[安装指南](#-安装) • [配置说明](#️-配置) • [故障排除](#-故障排除) • [开发文档](#-开发)
+[安装指南](#-安装) • [配置说明](#️-配置) • [故障排除](#%EF%B8%8F-%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4) • [开发文档](#-开发)
 
 </div>
 
@@ -87,11 +87,11 @@
 
 **PC 端效果**
 
-https://github.com/user-attachments/assets/MV_PC.mp4
+https://github.com/SnowSwordScholar/assets/MV_PC.mp4
 
 **移动端效果**
 
-https://github.com/user-attachments/assets/MV_moble.mp4
+https://github.com/SnowSwordScholar/assets/MV_moble.mp4
 
 </details>
 
