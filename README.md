@@ -11,6 +11,9 @@
 ![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square)
 ![GitHub release](https://img.shields.io/github/v/release/SnowSwordScholar/JellyfinAppleMusicLikeLyrics?style=flat-square)
 
+[![Release](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/actions/workflows/release.yml/badge.svg)](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/actions/workflows/release.yml)
+[![Build](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/actions/workflows/build.yml/badge.svg)](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/actions/workflows/build.yml)
+
 为 Jellyfin 网页客户端带来 **Apple Music 风格的歌词显示体验**。
 
 [安装指南](#-安装) • [配置说明](#️-配置) • [故障排除](#-故障排除) • [开发文档](#-开发)

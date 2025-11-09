@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'  # 当推送 v* 标签时触发
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -12,11 +15,32 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取完整历史，用于读取 tag 注释
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
+        
+    - name: Get version and changelog
+      id: version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+        
+        # 从 tag 注释中提取 changelog
+        CHANGELOG=$(git tag -l --format='%(contents)' "v$VERSION" | tail -n +3)
+        
+        # 如果 changelog 为空，使用默认值
+        if [ -z "$CHANGELOG" ]; then
+          CHANGELOG="Release version $VERSION"
+        fi
+        
+        # 将 changelog 保存到文件（处理多行）
+        echo "$CHANGELOG" > /tmp/changelog.txt
+        echo "Changelog extracted"
         
     - name: Restore dependencies
       run: dotnet restore
@@ -24,12 +48,21 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
       
+    - name: Verify DLL exists
+      run: |
+        if [ ! -f "bin/Release/net8.0/JellyfinAppleLyrics.dll" ]; then
+          echo "Error: DLL file not found!"
+          exit 1
+        fi
+        echo "DLL found: $(ls -lh bin/Release/net8.0/JellyfinAppleLyrics.dll)"
+      
     - name: Create package
       run: |
         mkdir -p releases
         cd bin/Release/net8.0
         zip -j ../../../releases/JellyfinAppleLyrics.dll.zip JellyfinAppleLyrics.dll
         cd ../../..
+        echo "Package created: $(ls -lh releases/JellyfinAppleLyrics.dll.zip)"
         
     - name: Calculate checksum
       id: checksum
@@ -38,43 +71,100 @@ jobs:
         echo "checksum=$CHECKSUM" >> $GITHUB_OUTPUT
         echo "MD5 Checksum: $CHECKSUM"
         
-    - name: Get version
-      id: version
+    - name: Update manifest.json
       run: |
-        VERSION=${GITHUB_REF#refs/tags/v}
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Version: $VERSION"
+        VERSION="${{ steps.version.outputs.version }}"
+        CHECKSUM="${{ steps.checksum.outputs.checksum }}"
+        TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        SOURCE_URL="https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/releases/download/v${VERSION}/JellyfinAppleLyrics.dll.zip"
+        
+        # 读取 changelog
+        CHANGELOG=$(cat /tmp/changelog.txt | jq -Rs .)
+        
+        # 创建新版本 JSON
+        NEW_VERSION=$(jq -n \
+          --arg version "${VERSION}.0" \
+          --argjson changelog "$CHANGELOG" \
+          --arg targetAbi "10.10.0.0" \
+          --arg sourceUrl "$SOURCE_URL" \
+          --arg checksum "$CHECKSUM" \
+          --arg timestamp "$TIMESTAMP" \
+          '{
+            version: $version,
+            changelog: $changelog,
+            targetAbi: $targetAbi,
+            sourceUrl: $sourceUrl,
+            checksum: $checksum,
+            timestamp: $timestamp
+          }')
+        
+        # 更新 manifest.json
+        jq --argjson newver "$NEW_VERSION" \
+           '.[0].versions = ([$newver] + (.[0].versions | map(select(.version != $newver.version))))' \
+           manifest.json > manifest.json.tmp
+        
+        mv manifest.json.tmp manifest.json
+        
+        echo "Manifest updated successfully"
+        cat manifest.json
+        
+    - name: Extract changelog for release body
+      id: changelog
+      run: |
+        CHANGELOG=$(cat /tmp/changelog.txt)
+        echo "content<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: Commit and push manifest
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        
+        git add manifest.json
+        
+        if git diff --staged --quiet; then
+          echo "No changes to manifest.json"
+        else
+          git commit -m "chore: update manifest.json for v${{ steps.version.outputs.version }}"
+          git push origin HEAD:main
+          echo "Manifest pushed to main branch"
+        fi
         
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: releases/JellyfinAppleLyrics.dll.zip
         body: |
-          ## Release ${{ steps.version.outputs.version }}
+          ## 🎵 Release ${{ steps.version.outputs.version }}
+          
+          ### 📝 Changelog
+          
+          ${{ steps.changelog.outputs.content }}
           
           ### 📦 Installation
           
+          **Option 1: Direct Download**
           1. Download `JellyfinAppleLyrics.dll.zip`
           2. Extract to your Jellyfin plugins folder
-          3. Restart Jellyfin
+          3. Restart Jellyfin server
+          4. Enable the plugin in Jellyfin Dashboard
+          
+          **Option 2: Repository Installation**
+          1. Go to Jellyfin Dashboard → Plugins → Repositories
+          2. Add repository: `https://raw.githubusercontent.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/main/manifest.json`
+          3. Install "Apple Music Like Lyrics" from the Catalog
           
           ### 🔐 Checksum
           
-          MD5: `${{ steps.checksum.outputs.checksum }}`
+          **MD5:** `${{ steps.checksum.outputs.checksum }}`
           
-          ### 📝 Full Changelog
+          ### 🔗 Links
           
-          See [CHANGELOG.md](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/blob/main/CHANGELOG.md)
+          - [Repository](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics)
+          - [Issues](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/issues)
+          - [Manifest](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/blob/main/manifest.json)
         draft: false
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Update manifest
-      run: |
-        VERSION=${{ steps.version.outputs.version }}
-        CHECKSUM=${{ steps.checksum.outputs.checksum }}
-        TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        
-        # 这里可以添加更新 manifest.json 并推送的逻辑
-        # 注意：需要配置 PAT (Personal Access Token) 才能推送回 main 分支
