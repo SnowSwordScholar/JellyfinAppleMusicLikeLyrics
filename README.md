@@ -87,11 +87,13 @@
 
 **PC 端效果**
 
-<video src="https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/raw/refs/heads/main/assets/MV_PC.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/aa1fc078-a014-4a06-ac40-e85661d376c5
+
+PC 端效果视频被压缩了，原视频在 assets/ 下
 
 **移动端效果**
 
-<video src="https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/raw/refs/heads/main/assets/MV_moble.mp4" controls width="100%"></video>
+[<video src="https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/raw/refs/heads/main/assets/MV_moble.mp4" controls width="100%"></video>](https://github.com/user-attachments/assets/fb3e5a35-9de2-4659-88e8-e82c3362e8ce)
 
 </details>
 
