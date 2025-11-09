@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/main/icon.png",
     "versions": [
       {
+        "version": "1.0.5.0",
+        "changelog": "再次测试工作流\n",
+        "targetAbi": "10.10.0.0",
+        "sourceUrl": "https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/releases/download/v1.0.5/JellyfinAppleLyrics.dll.zip",
+        "checksum": "a1e39f0bdd08e0f6941b4fd6e10e0770",
+        "timestamp": "2025-11-09T00:33:11Z"
+      },
+      {
         "version": "1.0.3.0",
         "changelog": "更新工具链\n",
         "targetAbi": "10.10.0.0",
