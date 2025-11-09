@@ -14,205 +14,207 @@
 [![Release](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/actions/workflows/release.yml/badge.svg)](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/actions/workflows/release.yml)
 [![Build](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/actions/workflows/build.yml/badge.svg)](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/actions/workflows/build.yml)
 
-为 Jellyfin 网页客户端带来 **Apple Music 风格的歌词显示体验**。
+Bring **Apple Music-style lyrics display experience** to Jellyfin web client.
 
-[安装指南](#-安装) • [配置说明](#️-配置) • [故障排除](#%EF%B8%8F-%E6%95%85%E9%9A%9C%E6%8E%92%E9%99%A4) • [开发文档](#-开发)
+[Installation Guide](#-installation) • [Configuration](#%EF%B8%8F-configuration) • [Troubleshooting](#%EF%B8%8F-troubleshooting) • [Development](#-development)
+
+**English | [简体中文](README_zh.md)**
 
 </div>
 
 ---
 
-## Apple Music 风格歌词
-用于 Jellyfin 服务器，通过注入 index.html 并 Hook Jellyfin 原来的音乐播放页面，提供了Apple Music 样式的歌词界面。本项目依赖 [Apple Music Like Lyrics](https://github.com/Steve-xmh/applemusic-like-lyrics) ，目前已经在歌词中实现了比较优雅的Hook，并可以通过 WebUI 详细的调节各项动画参数
+## Apple Music Style Lyrics
+For Jellyfin Server, by injecting index.html and hooking into Jellyfin's original music playback page, provides an Apple Music style lyrics interface. This project depends on [Apple Music Like Lyrics](https://github.com/Steve-xmh/applemusic-like-lyrics), and currently has implemented a relatively elegant hook in the lyrics, and can adjust various animation parameters in detail through WebUI.
 
 
 <details>
-<summary><b>✨ 功能特性</b></summary>
+<summary><b>✨ Features</b></summary>
 
-### 🎵 Apple Music 风格歌词
-- **优雅的歌词渲染**：平滑滚动动画，完美同步播放进度
-- **响应式字体大小**：自动适配横屏/竖屏，支持自定义活跃/非活跃歌词字体
-- **渐变模糊效果**：活跃歌词周围的歌词行自动应用渐变模糊，突出当前歌词
-- **弹簧动画**：可调速度的自然弹性动画过渡
+### 🎵 Apple Music Style Lyrics
+- **Elegant lyrics rendering**: Smooth scrolling animation, perfect sync with playback progress
+- **Responsive font size**: Auto-adapt to landscape/portrait, support custom active/inactive lyrics fonts
+- **Gradient blur effect**: Lyrics lines around active lyrics automatically apply gradient blur, highlighting current lyrics
+- **Spring animation**: Natural elastic animation transitions with adjustable speed
 
-### 🎨 动态视觉效果
-- **智能背景模糊**：基于专辑封面的高斯模糊背景（0-100px 可调）
-- **可定制透明度**：独立控制活跃/非活跃歌词的透明度和亮度
-- **发光与阴影**：活跃歌词发光效果，可调节强度
-- **颜色和滤镜**：精细控制模糊、亮度、阴影等视觉参数
+### 🎨 Dynamic Visual Effects
+- **Smart background blur**: Gaussian blur background based on album cover (0-100px adjustable)
+- **Customizable transparency**: Independent control of active/inactive lyrics transparency and brightness
+- **Glow and shadow**: Active lyrics glow effect with adjustable intensity
+- **Color and filters**: Fine control of blur, brightness, shadow and other visual parameters
 
-### ⚙️ 灵活配置
-- **Web UI 配置**：通过 Jellyfin 插件设置页面轻松调整所有参数
-- **调试模式**：可选的详细日志输出，便于问题排查
-- **自动歌词获取**：支持 Jellyfin 内置歌词系统
-- **点击跳转**：点击歌词行即可跳转到对应时间点
+### ⚙️ Flexible Configuration
+- **Web UI configuration**: Easily adjust all parameters through Jellyfin plugin settings page
+- **Debug mode**: Optional verbose logging output for troubleshooting
+- **Auto lyrics fetch**: Support Jellyfin built-in lyrics system
+- **Click to jump**: Click on lyrics line to jump to corresponding time point
 </details>
 
-## 📸 演示
+## 📸 Demonstration
 
-推荐同时安装主题：https://github.com/alexyle/jellyfin-theme ，这样上下栏将会有透明的高斯玻璃效果。在下面的演示中，双方都安装了此主题
+Recommend installing theme at the same time: https://github.com/alexyle/jellyfin-theme , so the top and bottom bars will have transparent Gaussian glass effect. In the demonstration below, both sides have this theme installed.
 
-### PC 端效果对比
-
-<table>
-<tr>
-<td width="50%" align="center"><b>Before (原版)</b></td>
-<td width="50%" align="center"><b>After (Apple Music 风格)</b></td>
-</tr>
-<tr>
-<td><img src="assets/Befor_PC.png" alt="PC端原版效果"/></td>
-<td><img src="assets/After_PC.png" alt="PC端Apple Music风格效果"/></td>
-</tr>
-</table>
-
-### 移动端效果对比
+### PC Side Effect Comparison
 
 <table>
 <tr>
-<td width="50%" align="center"><b>Before (原版)</b></td>
-<td width="50%" align="center"><b>After (Apple Music 风格)</b></td>
+<td width="50%" align="center"><b>Before (Original)</b></td>
+<td width="50%" align="center"><b>After (Apple Music Style)</b></td>
 </tr>
 <tr>
-<td><img src="assets/Before_moble.png" alt="移动端原版效果" width="150"/></td>
-<td><img src="assets/After_moble.png" alt="移动端Apple Music风格效果" width="150"/></td>
+<td><img src="assets/Befor_PC.png" alt="PC Original Effect"/></td>
+<td><img src="assets/After_PC.png" alt="PC Apple Music Style Effect"/></td>
 </tr>
 </table>
 
-### 视频演示
+### Mobile Side Effect Comparison
+
+<table>
+<tr>
+<td width="50%" align="center"><b>Before (Original)</b></td>
+<td width="50%" align="center"><b>After (Apple Music Style)</b></td>
+</tr>
+<tr>
+<td><img src="assets/Before_moble.png" alt="Mobile Original Effect" width="150"/></td>
+<td><img src="assets/After_moble.png" alt="Mobile Apple Music Style Effect" width="150"/></td>
+</tr>
+</table>
+
+### Video Demonstration
 
 <details>
-<summary><b>🎥 点击展开查看视频演示</b></summary>
+<summary><b>🎥 Click to expand video demonstration</b></summary>
 
 <br/>
 
-**PC 端效果**
+**PC Side Effect**
 
 https://github.com/user-attachments/assets/aa1fc078-a014-4a06-ac40-e85661d376c5
 
-PC 端效果视频被压缩了，原视频在 assets/ 下
+PC side effect video was compressed, original video is under assets/
 
-**移动端效果**
+**Mobile Side Effect**
 
 [<video src="https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/raw/refs/heads/main/assets/MV_moble.mp4" controls width="100%"></video>](https://github.com/user-attachments/assets/fb3e5a35-9de2-4659-88e8-e82c3362e8ce)
 
 </details>
 
-## 🔧 系统要求
+## 🔧 System Requirements
 
-- **Jellyfin**: 10.10.0 或更高版本
-- **浏览器**: Chrome 90+, Firefox 88+, Edge 90+, Safari 14+
-- **编译环境** (仅开发者): .NET 8.0 SDK
+- **Jellyfin**: 10.10.0 or higher
+- **Browser**: Chrome 90+, Firefox 88+, Edge 90+, Safari 14+
+- **Build Environment** (developers only): .NET 8.0 SDK
 
-## 📦 安装
+## 📦 Installation
 
-### 方法一：通过 Jellyfin 插件仓库（推荐）
+### Method 1: Through Jellyfin Plugin Repository (Recommended)
 
 
-1. 打开 Jellyfin 管理后台
-2. 导航到 **控制面板 > 插件 > 存储库**
-3. 添加自定义存储库：
-   - 名称: `Apple Music Like Lyrics @SnowSwordScholar`
+1. Open Jellyfin admin dashboard
+2. Navigate to **Dashboard > Plugins > Repositories**
+3. Add custom repository:
+   - Name: `Apple Music Like Lyrics @SnowSwordScholar`
    - URL: `https://raw.githubusercontent.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/main/manifest.json`
-4. 前往 **插件目录**，搜索 "Apple Music Lyrics",如果没有出现可以多次打开或者重启 Jellyfin
-5. 点击安装并重启 Jellyfin
+4. Go to **Catalog**, search for "Apple Music Lyrics", if it doesn't appear you can open multiple times or restart Jellyfin
+5. Click install and restart Jellyfin
 
-### 方法二：手动安装
+### Method 2: Manual Installation
 
-#### 1. 下载插件
+#### 1. Download Plugin
 
-从 [Releases](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/releases) 页面下载最新的 `JellyfinAppleLyrics.dll.zip`
+Download the latest `JellyfinAppleLyrics.dll.zip` from [Releases](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/releases) page
 
-#### 2. 安装 DLL
-此处可以 必应/Google/问AI  
+#### 2. Install DLL
+You can Bing/Google/ask AI here
 
-#### 3. 重启 Jellyfin
+#### 3. Restart Jellyfin
 
 
 
-插件会在 Jellyfin 启动时自动注入必要的脚本。如果自动注入失败，请查看[故障排除](#-故障排除)部分。
+The plugin will automatically inject necessary scripts when Jellyfin starts. If automatic injection fails, please check the [Troubleshooting](#-troubleshooting) section.
 
-## 🎛️ 配置
+## 🎛️ Configuration
 
-安装后，前往 **Jellyfin 控制面板 > 插件 > Apple Music Lyrics** 进行配置。
+After installation, go to **Jellyfin Dashboard > Plugins > Apple Music Lyrics** for configuration.
 
-### 主要配置选项
+### Main Configuration Options
 
-#### 字体设置
-| 选项 | 默认值 | 说明 |
+#### Font Settings
+| Option | Default | Description |
 |------|--------|------|
-| 横屏字体大小 | 32px | 桌面/横屏模式下的基础字体大小 |
-| 竖屏字体大小 | 24px | 移动端/竖屏模式下的基础字体大小 |
-| 横屏活跃字体 | 48px | 当前播放歌词的字体大小（横屏） |
-| 竖屏活跃字体 | 36px | 当前播放歌词的字体大小（竖屏） |
+| Landscape Font Size | 32px | Base font size in desktop/landscape mode |
+| Portrait Font Size | 24px | Base font size in mobile/portrait mode |
+| Landscape Active Font | 48px | Font size of currently playing lyrics (landscape) |
+| Portrait Active Font | 36px | Font size of currently playing lyrics (portrait) |
 
-#### 背景设置
-| 选项 | 默认值 | 说明 |
+#### Background Settings
+| Option | Default | Description |
 |------|--------|------|
-| 背景模糊 | 60px | 专辑封面背景的模糊程度（0-100） |
-| 背景亮度 | 0.8 | 背景亮度系数（0.0-2.0） |
+| Background Blur | 60px | Blur level of album cover background (0-100) |
+| Background Brightness | 0.8 | Background brightness coefficient (0.0-2.0) |
 
-#### 非活跃歌词设置
-| 选项 | 默认值 | 说明 |
+#### Inactive Lyrics Settings
+| Option | Default | Description |
 |------|--------|------|
-| 非活跃亮度 | 0.85 | 非活跃歌词的亮度（0.0-2.0） |
-| 非活跃透明度 | 0.65 | 非活跃歌词的透明度（0.0-1.0） |
-| 非活跃模糊 | 0.5px | 非活跃歌词的模糊程度（0-10） |
-| 非活跃阴影 | 0.0 | 非活跃歌词的阴影强度（0.0-1.0） |
+| Inactive Brightness | 0.85 | Brightness of inactive lyrics (0.0-2.0) |
+| Inactive Opacity | 0.65 | Opacity of inactive lyrics (0.0-1.0) |
+| Inactive Blur | 0.5px | Blur level of inactive lyrics (0-10) |
+| Inactive Shadow | 0.0 | Shadow intensity of inactive lyrics (0.0-1.0) |
 
-#### 活跃歌词设置
-| 选项 | 默认值 | 说明 |
+#### Active Lyrics Settings
+| Option | Default | Description |
 |------|--------|------|
-| 活跃亮度 | 1.15 | 活跃歌词的亮度（0.0-2.0） |
-| 活跃透明度 | 0.9 | 活跃歌词的透明度（0.0-1.0） |
-| 活跃发光强度 | 0.35 | 活跃歌词的发光效果强度（0.0-1.0） |
-| 活跃阴影强度 | 0.0 | 活跃歌词的阴影强度（0.0-1.0） |
-| 活跃模糊 | 0.0px | 活跃歌词的模糊程度（0-10） |
+| Active Brightness | 1.15 | Brightness of active lyrics (0.0-2.0) |
+| Active Opacity | 0.9 | Opacity of active lyrics (0.0-1.0) |
+| Active Glow Intensity | 0.35 | Glow effect intensity of active lyrics (0.0-1.0) |
+| Active Shadow Intensity | 0.0 | Shadow intensity of active lyrics (0.0-1.0) |
+| Active Blur | 0.0px | Blur level of active lyrics (0-10) |
 
-#### 渐变模糊设置
-| 选项 | 默认值 | 说明 |
+#### Gradient Blur Settings
+| Option | Default | Description |
 |------|--------|------|
-| 启用渐变模糊 | ✓ | 活跃歌词周围应用渐变模糊效果 |
-| 渐变模糊量 | 1.0 | 渐变模糊的强度（0-10） |
+| Enable Gradient Blur | ✓ | Apply gradient blur effect around active lyrics |
+| Gradient Blur Amount | 1.0 | Intensity of gradient blur (0-10) |
 
-#### 动画设置
-| 选项 | 默认值 | 说明 |
+#### Animation Settings
+| Option | Default | Description |
 |------|--------|------|
-| 滚动动画时长 | 1000ms | 歌词滚动动画的持续时间 |
-| 弹簧动画速度 | 1.0 | 弹簧动画的速度系数（0.1-5.0） |
-| Transform 时长 | 300ms | 样式变换过渡时间 |
-| 横屏活跃位置 | 0.30 | 活跃歌词在屏幕中的位置（0-1，0=顶部） |
-| 竖屏活跃位置 | 0.35 | 移动端活跃歌词位置 |
+| Scroll Animation Duration | 1000ms | Duration of lyrics scrolling animation |
+| Spring Animation Speed | 1.0 | Speed coefficient of spring animation (0.1-5.0) |
+| Transform Duration | 300ms | Style transformation transition time |
+| Landscape Active Position | 0.30 | Position of active lyrics on screen (0-1, 0=top) |
+| Portrait Active Position | 0.35 | Mobile active lyrics position |
 
-#### 其他设置
-| 选项 | 默认值 | 说明 |
+#### Other Settings
+| Option | Default | Description |
 |------|--------|------|
-| 自动获取歌词 | ✓ | 自动从 Jellyfin 获取歌词 |
-| 启用调试模式 | ✗ | 在浏览器控制台输出详细日志 |
+| Auto Fetch Lyrics | ✓ | Automatically fetch lyrics from Jellyfin |
+| Enable Debug Mode | ✗ | Output detailed logs in browser console |
 
 
 
-## 🎮 使用
+## 🎮 Usage
 
-1. 在 Jellyfin 中播放音乐
-2. 点击播放器底部的**歌词**图标
-3. 享受 Apple Music 风格的歌词体验！
+1. Play music in Jellyfin
+2. Click the **Lyrics** icon at the bottom of the player
+3. Enjoy the Apple Music style lyrics experience!
 
-**小技巧**：
-- 点击任意歌词行可跳转到该时间点
-- 启用调试模式之后打开 F12 控制台可查看详细运行信息
-- 调整活跃歌词位置以适应不同屏幕比例
+**Tips**:
+- Click any lyrics line to jump to that time point
+- Open F12 console after enabling debug mode to view detailed runtime information
+- Adjust active lyrics position to fit different screen ratios
 
-## 🛠️ 故障排除
+## 🛠️ Troubleshooting
 
-### 插件未加载
+### Plugin Not Loading
 
-**检查插件状态**：
+**Check plugin status**:
 ```bash
 # Linux
 ls -la /where/u/install/jellyfin/plugins/JellyfinAppleMusicLikeLyrics/
 ```
 
-**检查 Jellyfin 日志**：
+**Check Jellyfin logs**:
 ```bash
 # Linux
 tail -f /var/log/jellyfin/jellyfin.log | grep -i "apple\|lyrics"
@@ -221,320 +223,320 @@ tail -f /var/log/jellyfin/jellyfin.log | grep -i "apple\|lyrics"
 docker logs -f <container> | grep -i "apple\|lyrics"
 ```
 
-应该看到类似日志：
+Should see logs similar to:
 ```
 [INF] Discovered plugin JellyfinAppleMusicLikeLyrics
 [INF] Loaded plugin: Apple Music Like Lyrics
 ```
 
-### 歌词页面无效果
-目前已知在有些时候仍然不能正常 Hook 到位，可以通过点击歌曲详细页面的歌词按键或者点击下一首来进入到 Hook 后的页面
+### Lyrics Page Has No Effect
+Currently known that sometimes it still cannot hook properly, you can enter the hooked page by clicking the lyrics button on the song detail page or clicking next song
 
 
-**1. 检查浏览器控制台（F12）**
+**1. Check browser console (F12)**
 
-前往设置启用调试模式后，应该看到：
+After enabling debug mode in settings, should see:
 ```
 [AMLL DEBUG] Initializing...
 [AMLL DEBUG] Configuration loaded
 [AMLL DEBUG] Lyrics page detected
 ```
 
-**2. 检查脚本注入**
+**2. Check script injection**
 
-打开浏览器开发工具 > Network > 搜索 `init.js`，状态应为 `200 OK`
+Open browser dev tools > Network > search for `init.js`, status should be `200 OK`
 
 
-**3. 硬刷新页面**
+**3. Hard refresh page**
 
 - Windows/Linux: `Ctrl + F5`
 - Mac: `Cmd + Shift + R`
 
-### 歌词不同步
+### Lyrics Not Syncing
 
-1. 检查音频文件是否包含正确的歌词元数据
-2. 验证 Jellyfin 媒体库已正确扫描歌词
-3. 确保歌词时间戳格式正确（`[mm:ss.xx]`）
+1. Check if audio file contains correct lyrics metadata
+2. Verify Jellyfin media library has correctly scanned lyrics
+3. Ensure lyrics timestamp format is correct (`[mm:ss.xx]`)
 
-### 性能问题
+### Performance Issues
 
-如果遇到卡顿：  
-   - 关闭渐变模糊应当可以减少大部分的占用
-1. 降低背景模糊值（推荐 40-60）
-2. 减少渐变模糊量（推荐 0.5-1.5）
-3. 增加滚动动画时长（推荐 800-1200ms）
-4. 关闭浏览器硬件加速（不推荐）
+If experiencing stuttering:
+   - Turning off gradient blur should reduce most of the usage
+1. Lower background blur value (recommend 40-60)
+2. Reduce gradient blur amount (recommend 0.5-1.5)
+3. Increase scroll animation duration (recommend 800-1200ms)
+4. Turn off browser hardware acceleration (not recommended)
 
-### 仍无法解决？
+### Still Cannot Resolve?
 
-提交 [Issue](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/issues) 时请提供：
+When submitting an [Issue](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/issues) please provide:
 
-- Jellyfin 版本
-- 浏览器版本和操作系统
-- 部署方式（Docker/裸机）
-- 插件版本
-- Jellyfin 日志（相关部分）
-- 浏览器控制台日志（F12 > Console）
-- 重现步骤
+- Jellyfin version
+- Browser version and operating system
+- Deployment method (Docker/bare metal)
+- Plugin version
+- Jellyfin logs (relevant parts)
+- Browser console logs (F12 > Console)
+- Reproduction steps
 
-## 🧑‍💻 开发
+## 🧑‍💻 Development
 
-### 从源代码构建
+### Build from Source
 
-**环境要求**：
+**Requirements**:
 - .NET 8.0 SDK
 - Git
 
-**步骤**：
+**Steps**:
 
 ```bash
-# 克隆仓库
+# Clone repository
 git clone https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics.git
 cd JellyfinAppleMusicLikeLyrics
 
-# 恢复依赖
+# Restore dependencies
 dotnet restore
 
-# 构建插件
+# Build plugin
 dotnet build --configuration Release
 
-# 输出位置
+# Output location
 ls bin/Release/net8.0/JellyfinAppleLyrics.dll
 ```
 
-### 项目结构
+### Project Structure
 
 ```
 JellyfinAppleMusicLikeLyrics/
-├── Plugin.cs                          # 插件主类
-├── PluginConfiguration.cs             # 配置模型（所有可调参数）
-├── AppleLyricsController.cs           # REST API 控制器
-├── AppleLyricsService.cs              # 后台服务
-├── ConfigurationPageProvider.cs       # 配置页面提供者
-├── LyricsScriptInjectionMiddleware.cs # 中间件（注入脚本）
-├── ScriptInjector.cs                  # 脚本注入器
-├── ServiceCollectionExtensions.cs     # 依赖注入扩展
+├── Plugin.cs                          # Plugin main class
+├── PluginConfiguration.cs             # Configuration model (all adjustable parameters)
+├── AppleLyricsController.cs           # REST API controller
+├── AppleLyricsService.cs              # Background service
+├── ConfigurationPageProvider.cs       # Configuration page provider
+├── LyricsScriptInjectionMiddleware.cs # Middleware (inject scripts)
+├── ScriptInjector.cs                  # Script injector
+├── ServiceCollectionExtensions.cs     # Dependency injection extensions
 ├── Resources/web/
-│   ├── init.js                        # 初始化脚本
-│   ├── lyrics-amll.js                 # 核心歌词渲染逻辑
-│   └── ConfigPage.html                # 配置页面 HTML
-├── LICENSE                            # AGPL-3.0 许可证
-└── README.md                          # 本文件
+│   ├── init.js                        # Initialization script
+│   ├── lyrics-amll.js                 # Core lyrics rendering logic
+│   └── ConfigPage.html                # Configuration page HTML
+├── LICENSE                            # AGPL-3.0 license
+└── README.md                          # This file
 ```
 
-### API 端点
+### API Endpoints
 
-| 端点 | 方法 | 描述 |
+| Endpoint | Method | Description |
 |------|------|------|
-| `/applelyrics/init.js` | GET | 初始化脚本 |
-| `/applelyrics/lyrics-amll.js` | GET | 核心歌词渲染库 |
-| `/applelyrics/config` | GET | 获取当前配置 |
-| `/applelyrics/config` | POST | 保存配置（JSON Body） |
+| `/applelyrics/init.js` | GET | Initialization script |
+| `/applelyrics/lyrics-amll.js` | GET | Core lyrics rendering library |
+| `/applelyrics/config` | GET | Get current configuration |
+| `/applelyrics/config` | POST | Save configuration (JSON Body) |
 
-**示例：获取配置**
+**Example: Get configuration**
 ```bash
 curl http://localhost:8096/applelyrics/config
 ```
 
-**示例：更新配置**
+**Example: Update configuration**
 ```bash
 curl -X POST http://localhost:8096/applelyrics/config \
   -H "Content-Type: application/json" \
   -d '{"FontSizeLandscape":36,"EnableDebugMode":true}'
 ```
 
-### 贡献指南
+### Contribution Guidelines
 
-欢迎贡献！请遵循以下步骤：
+Contributions welcome! Please follow these steps:
 
-1. Fork 本仓库
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+1. Fork this repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
 
-**代码规范**：
-- 遵循 C# 编码约定
-- JavaScript 使用 2 空格缩进
-- 所有公共 API 必须有 XML 文档注释
-- 提交信息使用英文，清晰描述更改内容
+**Code Standards**:
+- Follow C# coding conventions
+- JavaScript uses 2 space indentation
+- All public APIs must have XML documentation comments
+- Commit messages use English, clearly describe changes
 
-## 📜 许可证
+## 📜 License
 
-本项目采用 [AGPL-3.0 许可证](LICENSE)。
+This project is licensed under the [AGPL-3.0 License](LICENSE).
 
-### 关键要点
+### Key Points
 
-- ✅ **自由使用**：可以自由使用、修改和分发
-- ✅ **开源要求**：如果你修改并分发，必须开源你的修改
-- ✅ **网络使用**：如果通过网络提供服务，也必须开源
-- ❌ **专有闭源**：不能将本项目用于闭源商业软件
+- ✅ **Free to use**: Free to use, modify and distribute
+- ✅ **Open source requirement**: If you modify and distribute, must open source your modifications
+- ✅ **Network use**: If providing service through network, must also open source
+- ❌ **Proprietary closed source**: Cannot use this project in closed source commercial software
 
-详见 [LICENSE](LICENSE) 文件。
+See [LICENSE](LICENSE) file for details.
 
-## 🙏 致谢
+## 🙏 Acknowledgments
 
-本项目基于以下优秀开源项目：
+This project is based on the following excellent open source projects:
 
 - **[Apple Music Like Lyrics](https://github.com/Steve-xmh/applemusic-like-lyrics)** (AGPL-3.0)  
-  提供核心歌词渲染逻辑和视觉效果算法
+  Provides core lyrics rendering logic and visual effects algorithms
 
 - **[Jellyfin](https://github.com/jellyfin/jellyfin)** (GPL-2.0)  
-  开源媒体服务器平台
+  Open source media server platform
 
-感谢所有开源贡献者的辛勤工作！
+Thanks to all open source contributors for their hard work!
 
-## 🔗 相关链接
+## 🔗 Related Links
 
-- [GitHub 仓库](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics)
-- [问题追踪](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/issues)
-- [发布页面](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/releases)
-- [Jellyfin 官网](https://jellyfin.org)
-- [Jellyfin 插件开发文档](https://jellyfin.org/docs/general/server/plugins/)
+- [GitHub Repository](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics)
+- [Issue Tracker](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/issues)
+- [Release Page](https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/releases)
+- [Jellyfin Official Website](https://jellyfin.org)
+- [Jellyfin Plugin Development Documentation](https://jellyfin.org/docs/general/server/plugins/)
 
 
 
 ---
 
-## ⚖️ 免责声明
+## ⚖️ Disclaimer
 
-### 简化版免责声明
+### Simplified Disclaimer
 
-**⚠️ 重要提示：**
+**⚠️ Important Notice:**
 
-- ✅ 本插件是开源社区项目，**不隶属于 Jellyfin 或 Apple Inc.**
-- ✅ 按"现状"提供，**无任何保证**
-- ✅ 使用风险**自行承担**
-- ✅ 开发者**不承担任何责任**
-- ✅ 必须遵守 **AGPL-3.0 许可证**
-- ✅ 商业使用需**开源并提供源代码**
-- ✅ 使用前请**备份数据**并**充分测试**
-- ✅ 仅用于**合法拥有的媒体内容**
+- ✅ This plugin is an open source community project, **not affiliated with Jellyfin or Apple Inc.**
+- ✅ Provided "as is", **without any warranty**
+- ✅ Use at **your own risk**
+- ✅ Developers **assume no liability**
+- ✅ Must comply with **AGPL-3.0 license**
+- ✅ Commercial use requires **open source and provide source code**
+- ✅ **Backup data** and **fully test** before use
+- ✅ Only for **legally owned media content**
 
-**使用即表示同意上述所有条款。**
+**Use implies agreement to all above terms.**
 
 ---
 
 <details>
-<summary><b>📋 点击展开完整法律声明</b></summary>
+<summary><b>📋 Click to expand full legal statement</b></summary>
 
 <br/>
 
-### 法律声明
+### Legal Statement
 
-本软件（"Jellyfin Apple Music Like Lyrics"，以下简称"本插件"）是一个开源项目，按"现状"提供，不附带任何明示或暗示的保证。使用本插件即表示您同意以下条款：
+This software ("Jellyfin Apple Music Like Lyrics", hereinafter referred to as "this plugin") is an open source project, provided "as is", without any express or implied warranties. Use of this plugin indicates your agreement to the following terms:
 
-#### 1. 使用风险承担
+#### 1. Assumption of Risk
 
-- 本插件由社区贡献者开发和维护，**不隶属于 Jellyfin 官方团队或 Apple Inc.**
-- 使用本插件的所有风险由用户自行承担
-- 开发者不对因使用本插件而导致的任何直接、间接、附带、特殊、惩罚性或后果性损害负责，包括但不限于：
-  - 数据丢失或损坏
-  - 服务器性能下降
-  - 系统不稳定
-  - 第三方服务中断
-  - 任何其他技术或业务损失
+- This plugin is developed and maintained by community contributors, **not affiliated with the Jellyfin official team or Apple Inc.**
+- All risks of using this plugin are borne by the user
+- Developers are not responsible for any direct, indirect, incidental, special, punitive or consequential damages resulting from the use of this plugin, including but not limited to:
+  - Data loss or corruption
+  - Server performance degradation
+  - System instability
+  - Third-party service interruption
+  - Any other technical or business losses
 
-#### 2. 知识产权声明
+#### 2. Intellectual Property Statement
 
-- 本插件的名称中包含"Apple Music"字样，仅用于描述其提供的功能风格，**不表示与 Apple Inc. 有任何关联、认可或赞助关系**
-- "Apple Music"是 Apple Inc. 在美国和其他国家的注册商标
-- "Jellyfin"是 Jellyfin 项目的商标
-- 本项目尊重所有相关商标权，任何对商标的使用均符合合理使用原则
+- The name of this plugin contains "Apple Music" wording, only used to describe the functional style it provides, **does not indicate any affiliation, endorsement or sponsorship relationship with Apple Inc.**
+- "Apple Music" is a registered trademark of Apple Inc. in the United States and other countries
+- "Jellyfin" is a trademark of the Jellyfin project
+- This project respects all relevant trademark rights, any use of trademarks complies with fair use principles
 
-#### 3. 许可证合规
+#### 3. License Compliance
 
-- 本插件采用 [AGPL-3.0 许可证](LICENSE)
-- 基于 [Apple Music Like Lyrics](https://github.com/Steve-xmh/applemusic-like-lyrics) 项目（AGPL-3.0）
-- 用户必须遵守 AGPL-3.0 许可证的所有条款
-- 任何修改和分发必须同样采用 AGPL-3.0 许可证并公开源代码
-- 通过网络提供服务时必须向用户提供源代码访问权限
+- This plugin is licensed under [AGPL-3.0 License](LICENSE)
+- Based on [Apple Music Like Lyrics](https://github.com/Steve-xmh/applemusic-like-lyrics) project (AGPL-3.0)
+- Users must comply with all terms of the AGPL-3.0 license
+- Any modifications and distribution must also use the AGPL-3.0 license and disclose source code
+- When providing services through network, must provide source code access to users
 
-#### 4. 第三方组件
+#### 4. Third-Party Components
 
-本插件使用以下第三方组件，各组件受其各自许可证约束：
+This plugin uses the following third-party components, each component is subject to its respective license:
 
-- **Apple Music Like Lyrics** - AGPL-3.0 许可证
-- **Jellyfin Server** - GPL-2.0 许可证
-- **.NET 8.0** - MIT 许可证
-- **其他依赖项** - 详见各自的许可证文件
+- **Apple Music Like Lyrics** - AGPL-3.0 License
+- **Jellyfin Server** - GPL-2.0 License
+- **.NET 8.0** - MIT License
+- **Other dependencies** - See respective license files
 
-用户有责任确保遵守所有相关第三方许可证的条款。
+Users are responsible for ensuring compliance with all relevant third-party license terms.
 
-#### 5. 无担保声明
+#### 5. No Warranty Statement
 
-根据 AGPL-3.0 许可证第 15 条和第 16 条：
+According to Articles 15 and 16 of the AGPL-3.0 License:
 
-**在适用法律允许的范围内，本软件按"现状"提供，不附带任何形式的明示或暗示保证，包括但不限于：**
+**To the extent permitted by applicable law, this software is provided "as is", without any express or implied warranties, including but not limited to:**
 
-- 适销性保证
-- 特定用途适用性保证
-- 不侵权保证
-- 通过使用或交易产生的保证
+- Merchantability warranty
+- Fitness for a particular purpose warranty
+- Non-infringement warranty
+- Warranties arising from use or trade
 
-**开发者不保证：**
-- 本插件将满足您的需求
-- 本插件将不间断或无错误运行
-- 任何缺陷或错误将被修复
-- 本插件与特定硬件或软件配置兼容
+**Developers do not guarantee:**
+- This plugin will meet your needs
+- This plugin will operate uninterrupted or error-free
+- Any defects or errors will be fixed
+- This plugin is compatible with specific hardware or software configurations
 
-#### 6. 责任限制
+#### 6. Limitation of Liability
 
-**在任何情况下，本插件的开发者、贡献者或版权持有人均不对以下情况承担责任：**
+**Under no circumstances shall the developers, contributors or copyright holders of this plugin be liable for:**
 
-1. **数据安全**：任何因使用本插件导致的数据丢失、泄露或损坏
-2. **系统稳定性**：因本插件引起的系统崩溃、性能下降或服务中断
-3. **兼容性问题**：与其他软件、插件或系统的不兼容
-4. **升级影响**：Jellyfin 或相关组件升级后的功能失效
-5. **间接损失**：业务中断、利润损失、商誉损害或其他间接、特殊或后果性损害
+1. **Data Security**: Any data loss, leakage or corruption caused by using this plugin
+2. **System Stability**: System crashes, performance degradation or service interruption caused by this plugin
+3. **Compatibility Issues**: Incompatibility with other software, plugins or systems
+4. **Upgrade Impact**: Function failure after Jellyfin or related component upgrades
+5. **Indirect Losses**: Business interruption, profit loss, goodwill damage or other indirect, special or consequential damages
 
-#### 7. 用户责任
+#### 7. User Responsibilities
 
-使用本插件时，用户承诺：
+When using this plugin, users promise:
 
-1. **遵守法律**：遵守所在司法管辖区的所有适用法律法规
-2. **版权保护**：不使用本插件侵犯他人的知识产权
-3. **合法内容**：仅对合法拥有或有权使用的媒体内容使用本插件
-4. **风险评估**：在生产环境使用前进行充分的测试和评估
-5. **数据备份**：使用前备份所有重要数据
-6. **许可证遵守**：遵守 AGPL-3.0 许可证的所有要求
+1. **Comply with Laws**: Comply with all applicable laws and regulations in your jurisdiction
+2. **Copyright Protection**: Not use this plugin to infringe on others' intellectual property rights
+3. **Legal Content**: Only use this plugin for media content legally owned or authorized to use
+4. **Risk Assessment**: Conduct sufficient testing and evaluation before production environment use
+5. **Data Backup**: Backup all important data before use
+6. **License Compliance**: Comply with all requirements of the AGPL-3.0 license
 
-#### 8. 免责条款的地域限制
+#### 8. Geographic Limitations of Disclaimer
 
-某些司法管辖区不允许排除或限制某些保证或责任。在这些地区，上述免责声明和责任限制可能不完全适用于您。在此情况下，这些免责声明和限制将在适用法律允许的最大范围内适用。
+Some jurisdictions do not allow exclusion or limitation of certain warranties or liabilities. In these regions, the above disclaimers and liability limitations may not fully apply to you. In this case, these disclaimers and limitations will apply to the maximum extent permitted by applicable law.
 
-#### 9. 商业使用
+#### 9. Commercial Use
 
-如果您计划将本插件用于商业用途：
+If you plan to use this plugin for commercial purposes:
 
-1. 必须遵守 AGPL-3.0 许可证的所有要求
-2. 必须向服务用户提供源代码访问权限
-3. 不得将本插件作为专有商业产品的一部分闭源销售
-4. 建议咨询专业法律顾问以确保合规
+1. Must comply with all requirements of the AGPL-3.0 license
+2. Must provide source code access to service users
+3. Cannot sell this plugin closed-source as part of proprietary commercial products
+4. Recommend consulting professional legal counsel to ensure compliance
 
-#### 10. 安全声明
+#### 10. Security Statement
 
-- 本插件需要注入 JavaScript 到 Jellyfin 的 web 界面
-- 用户应当理解此类注入的潜在安全影响
-- 建议仅从官方 GitHub 仓库或可信源获取本插件
-- 开发者会尽力确保代码安全，但不对安全漏洞承担责任
-- 发现安全问题请通过 GitHub Issues 报告（敏感问题请私下联系）
+- This plugin needs to inject JavaScript into Jellyfin's web interface
+- Users should understand the potential security implications of such injection
+- Recommend obtaining this plugin only from official GitHub repository or trusted sources
+- Developers will do their best to ensure code security, but are not responsible for security vulnerabilities
+- If security issues are found please report through GitHub Issues (for sensitive issues please contact privately)
 
-#### 11. 更新与维护
+#### 11. Updates and Maintenance
 
-- 本插件作为开源项目维护，不保证持续更新
-- 开发者保留随时停止维护的权利
-- 不保证与未来版本的 Jellyfin 或依赖组件兼容
-- 用户应当准备在必要时自行维护或寻找替代方案
+- This plugin is maintained as an open source project, continuous updates are not guaranteed
+- Developers reserve the right to stop maintenance at any time
+- Compatibility with future versions of Jellyfin or dependent components is not guaranteed
+- Users should be prepared to maintain on their own or find alternatives when necessary
 
-#### 12. 联系方式
+#### 12. Contact Information
 
-- **问题报告**：https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/issues
-- **源代码**：https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics
+- **Issue Report**: https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics/issues
+- **Source Code**: https://github.com/SnowSwordScholar/JellyfinAppleMusicLikeLyrics
 
-#### 13. 免责声明的效力
+#### 13. Effectiveness of Disclaimer
 
-本免责声明是本插件使用条款的组成部分。通过下载、安装、复制或使用本插件，您承认已阅读、理解并同意受本免责声明约束。如果您不同意这些条款，请勿使用本插件。
+This disclaimer is part of the terms of use of this plugin. By downloading, installing, copying or using this plugin, you acknowledge that you have read, understood and agreed to be bound by this disclaimer. If you do not agree to these terms, please do not use this plugin.
 
 </details>
 
@@ -543,11 +545,10 @@ curl -X POST http://localhost:8096/applelyrics/config \
 
 <div align="center">
 
-**如果这个项目对你有帮助，请给一个 ⭐️ Star！**
+**If this project helps you, please give a ⭐️ Star!**
 
 Made with ❤️ by [SnowSwordScholar](https://github.com/SnowSwordScholar)
 
-本项目与 Apple Inc. 或 Jellyfin 项目无任何官方关联。
+This project has no official affiliation with Apple Inc. or the Jellyfin project.
 
 </div>
-
